@@ -1,24 +1,157 @@
-# Compiled class file
-*.class
+# =====================================
+# 🐍 PYTHON SPECIAL .GITIGNORE
+# =====================================
 
-# Log file
+# --- Python cache & compiled files ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# --- Distribution / packaging ---
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# --- Virtual environments ---
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+.pyenv/
+pip-wheel-metadata/
+site/
+
+# --- PyInstaller ---
+# Usually these files are created when building executables
+# with pyinstaller
+*.manifest
+*.spec
+
+# --- Installer logs ---
+pip-log.txt
+pip-delete-this-directory.txt
+
+# --- Unit test / coverage reports ---
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# --- Translations ---
+*.mo
+*.pot
+
+# --- Django stuff ---
 *.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+*.pydevproject
 
-# BlueJ files
-*.ctxt
+# --- Flask stuff ---
+instance/
+.webassets-cache
+*.db
+*.sqlite
 
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
+# --- Scrapy stuff ---
+.scrapy
 
-# Package Files #
-*.jar
-*.war
-*.nar
-*.ear
-*.zip
-*.tar.gz
-*.rar
+# --- Sphinx documentation ---
+docs/_build/
+builddocs/
+doc/_build/
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
-hs_err_pid*
-replay_pid*
+# --- PyBuilder ---
+target/
+
+# --- IPython / Jupyter Notebook ---
+.ipynb_checkpoints
+*.nbconvert.ipynb
+
+# --- mypy / pytype / pyre ---
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pyre/
+.pytype/
+
+# --- Cython compiled files ---
+*.c
+*.cpp
+*.so
+*.pyd
+
+# --- Logs and debug ---
+*.log
+logs/
+log/
+*.bak
+*.tmp
+*.swp
+*.swo
+*.orig
+
+# --- IDEs and editors ---
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+*.code-workspace
+
+# --- System files ---
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# --- Environment variables / secrets ---
+.env
+.env.*
+!.env.example
+
+# --- Local databases or cache ---
+*.db
+*.sqlite3
+cache/
+data/
+tmp/
+temp/
+*.lock
+
+# --- Custom app data (optional) ---
+# Uncomment if your app generates local files:
+# output/
+# reports/
+# exports/
+# backups/
+
+# =====================================
+# END OF FILE
+# =====================================
