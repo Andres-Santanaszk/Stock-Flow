@@ -48,8 +48,6 @@ import psycopg2
 # brand_name
 # '''
 #?
-
-
 connection = psycopg2.connect(host = 'localhost', port = '5432', user = 'postgres', password = 'contaseña de la base de datos', dbname = 'stock_flow')
 cursor = connection.cursor()
 tabla_users = cursor.execute('''
@@ -100,5 +98,4 @@ CREATE TABLE items(
                                     REFERENCES brands(brand_id)
 )
 ''')
-
 connection.commit()
