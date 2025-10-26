@@ -152,6 +152,10 @@ temp/
 # exports/
 # backups/
 
+# specifics
+quick_hardcoded.py
+initdb/
+
 # =====================================
 # END OF FILE
 # =====================================
