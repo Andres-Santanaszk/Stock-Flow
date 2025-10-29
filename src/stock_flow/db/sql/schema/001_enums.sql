@@ -1,4 +1,3 @@
--- ENUMS base
 DO $$ BEGIN
   CREATE TYPE mov_type AS ENUM ('IN', 'OUT', 'ADJUST');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;

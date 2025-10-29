@@ -27,15 +27,17 @@ CREATE TABLE IF NOT EXISTS containers (
 
 -- ITEMS en CONTENEDORES (una ubicación física única por fila)
 CREATE TABLE IF NOT EXISTS item_containers (
-  id_item       INT NOT NULL REFERENCES items(id_item) ON DELETE RESTRICT,
-  id_container  INT NOT NULL REFERENCES containers(id_container) ON DELETE RESTRICT,
-  location      VARCHAR(64) NOT NULL,     -- "Rack-A2", "Bin-003", "Pal-491"
-  qty           NUMERIC(18,3) NOT NULL DEFAULT 0 CHECK (qty >= 0),
-  CONSTRAINT uq_location UNIQUE (id_container, location),
-  CONSTRAINT pk_item_containers PRIMARY KEY (id_item, id_container, location)
+  id           BIGSERIAL PRIMARY KEY,
+  id_item      INT NOT NULL REFERENCES items(id_item) ON DELETE RESTRICT,
+  id_container INT NOT NULL REFERENCES containers(id_container) ON DELETE RESTRICT,
+  location     VARCHAR(64) NOT NULL,
+  qty          NUMERIC(18,3) NOT NULL DEFAULT 0 CHECK (qty >= 0),
+  CONSTRAINT uq_item_containers_container_location UNIQUE (id_container, location)
 );
 
-CREATE INDEX IF NOT EXISTS ix_item_containers_item_container ON item_containers (id_item, id_container);
+CREATE INDEX IF NOT EXISTS ix_item_containers_item_container
+  ON item_containers (id_item, id_container);
+
 
 -- UOM por ITEM (factores de conversión)
 CREATE TABLE IF NOT EXISTS item_uom (
