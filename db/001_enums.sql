@@ -1,5 +1,5 @@
 DO $$ BEGIN
-  CREATE TYPE mov_type AS ENUM ('IN', 'OUT', 'ADJUST');
+  CREATE TYPE mov_type AS ENUM ('IN', 'OUT');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
@@ -20,3 +20,18 @@ DO $$ BEGIN
     'transfer_in', 'transfer_out', 'manufacture_consume', 'manufacture_produce'
   );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+DO $$ BEGIN
+  CREATE TYPE item_pack_type AS ENUM (
+    'unit',        -- pieza suelta, unidad
+    'package',     -- paquete pequeño
+    'box',         -- caja o master pack
+    'bottle',      -- botella o frasco
+    'bag',         -- bolsa
+    'roll',        -- rollo
+    'meter',       -- longitud
+    'liter',       -- volumen
+    'set'          -- conjunto o kit
+  );
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
