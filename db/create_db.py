@@ -5,8 +5,8 @@ from config.settings import DB_USER, DB_PASSWORD, DB_HOST, DB_PORT, DB_NAME
 
 def ensure_database():
     conn = psycopg2.connect(
-        user=DB_USER,
-        password=DB_PASSWORD,
+        user="postgres",
+        password="Falcored94", # aqui tienen que cambiar a la password que pusieron al momento de instalar postgres 
         dbname="postgres",
         host=DB_HOST,
         port=DB_PORT,

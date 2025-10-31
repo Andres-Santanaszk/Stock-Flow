@@ -1,15 +1,14 @@
 CREATE TABLE IF NOT EXISTS items (
   id_item       SERIAL PRIMARY KEY,
-  name          VARCHAR(180) NOT NULL,
+  name          VARCHAR(120) NOT NULL,
   sku           VARCHAR(64)  NOT NULL UNIQUE,
   barcode       VARCHAR(32)  UNIQUE,
+  brand_id      INT           REFERENCES brands(id_brand) ON DELETE SET NULL,
+  description   TEXT NOT NULL DEFAULT '',
   type          item_type    NOT NULL DEFAULT 'finished_product',
   pack_type     item_pack_type NOT NULL DEFAULT 'unit',
-  item_qty      NUMERIC(18,3) NOT NULL DEFAULT 0,
   max_capacity  NUMERIC(18,3) NOT NULL DEFAULT 0,
   active        BOOLEAN       NOT NULL DEFAULT TRUE,
-  description   TEXT NOT NULL DEFAULT ''
-  brand_id      INT           REFERENCES brands(id_brand) ON DELETE SET NULL,
   created_at    TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   updated_at    TIMESTAMPTZ   NOT NULL DEFAULT NOW()
 );
@@ -50,7 +49,7 @@ CREATE TABLE IF NOT EXISTS containers (
   active BOOLEAN NOT NULL DEFAULT TRUE
 );
 
--- ITEMS en CONTENEDORES
+
 CREATE TABLE IF NOT EXISTS item_containers (
   id           BIGSERIAL PRIMARY KEY,
   id_item      INT NOT NULL REFERENCES items(id_item) ON DELETE RESTRICT,
@@ -66,34 +65,58 @@ CREATE INDEX IF NOT EXISTS ix_item_containers_item_container ON item_containers 
 
 CREATE TABLE IF NOT EXISTS movements (
   id_mov      BIGSERIAL PRIMARY KEY,
-  id_item     INT       NOT NULL REFERENCES items(id_item) ON DELETE RESTRICT,
-  id_user     INT       NOT NULL REFERENCES users(id_user) ON DELETE RESTRICT,
-  type        mov_type  NOT NULL DEFAULT 'OUT',
-  qty         NUMERIC(18,3) NOT NULL CHECK (qty <> 0),   -- >0 entrada, <0 salida
+  id_item     INT  NOT NULL REFERENCES items(id_item) ON DELETE RESTRICT,
+  id_user     INT  NOT NULL REFERENCES users(id_user) ON DELETE RESTRICT,
+  type        mov_type  NOT NULL,
+  qty         NUMERIC(18,3) NOT NULL CHECK (qty <> 0),
   created_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   reason      mov_reason    NOT NULL,
-  source      VARCHAR(120),
-  target      VARCHAR(120)
+  from_container_id INT REFERENCES containers(id_container),
+  from_location     VARCHAR(64),
+  to_container_id   INT REFERENCES containers(id_container),
+  to_location       VARCHAR(64),
+
+  CONSTRAINT chk_type_reason_consistency CHECK (
+    (type = 'IN'  AND reason IN ('return_in','transfer_in','manufacture_produce')) OR
+    (type = 'OUT' AND reason IN ('shipping','return_out','transfer_out','manufacture_consume')) OR
+    (type = 'ADJUST' AND reason IN ('scrap','damage','relocation'))
+  ),
+
+  CONSTRAINT chk_mov_qty_sign CHECK (
+    (type = 'IN'  AND qty > 0) OR
+    (type = 'OUT' AND qty < 0) OR
+    (type = 'ADJUST')
+  ),
+
+  CONSTRAINT chk_mov_locations_by_type CHECK (
+    (type = 'IN'
+      AND to_container_id IS NOT NULL AND to_location IS NOT NULL
+      AND from_container_id IS NULL AND from_location IS NULL)
+    OR
+    (type = 'OUT'
+      AND from_container_id IS NOT NULL AND from_location IS NOT NULL
+      AND to_container_id IS NULL AND to_location IS NULL)
+    OR
+    (type = 'ADJUST' AND (
+        (from_container_id IS NOT NULL AND from_location IS NOT NULL
+         AND to_container_id IS NULL AND to_location IS NULL)
+      OR
+        (to_container_id IS NOT NULL AND to_location IS NOT NULL
+         AND from_container_id IS NULL AND from_location IS NULL)
+    ))
+  ),
+
+  CONSTRAINT chk_from_to_diff CHECK (
+    NOT (
+      from_container_id IS NOT NULL AND to_container_id IS NOT NULL
+      AND from_container_id = to_container_id
+      AND COALESCE(from_location,'') = COALESCE(to_location,'')
+    )
+  )
 );
+
 
 CREATE INDEX IF NOT EXISTS ix_movements_item_created_at ON movements (id_item, created_at);
 CREATE INDEX IF NOT EXISTS ix_movements_created_at ON movements (created_at);
 CREATE INDEX IF NOT EXISTS ix_movements_user ON movements (id_user);
-
-CREATE TABLE IF NOT EXISTS categories (
-  id_category   SERIAL PRIMARY KEY,
-  name          VARCHAR(50) NOT NULL UNIQUE,
-  description   TEXT,
-  active        BOOLEAN NOT NULL DEFAULT TRUE,
-  created_at    TIMESTAMPTZ NOT NULL DEFAULT NOW()
-);
-
-CREATE TABLE IF NOT EXISTS item_categories (
-  id_item      INT NOT NULL REFERENCES items(id_item)      ON DELETE CASCADE,
-  id_category  INT NOT NULL REFERENCES categories(id_category) ON DELETE CASCADE,
-  PRIMARY KEY (id_item, id_category)
-);
-
-CREATE INDEX IF NOT EXISTS ix_item_categories_item ON item_categories (id_item);
-CREATE INDEX IF NOT EXISTS ix_item_categories_category ON item_categories (id_category);
 

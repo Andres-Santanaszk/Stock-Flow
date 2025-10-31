@@ -1,9 +1,14 @@
 -- BRANDS
 CREATE TABLE IF NOT EXISTS brands (
   id_brand SERIAL PRIMARY KEY,
-  name VARCHAR(120) NOT NULL UNIQUE,
+  name VARCHAR(60) NOT NULL UNIQUE,
   description TEXT,
   website VARCHAR(255),
   contact_email VARCHAR(150),
-  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT chk_brands_contact_email_format
+    CHECK (
+      contact_email IS NULL
+      OR contact_email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
+    )
 );

@@ -7,6 +7,6 @@ def test_query():
                 cur.execute("SELECT NOW();")
                 print("✅ Conectado:", cur.fetchone())
     except Exception as e:
-        print("❌ Error:", e)
+        print("Error:", e)
 
 test_query()
