@@ -12,3 +12,13 @@ CREATE TABLE IF NOT EXISTS brands (
       OR contact_email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'
     )
 );
+
+CREATE TABLE IF NOT EXISTS categories (
+  id_category  SERIAL PRIMARY KEY,
+  name         VARCHAR(100) NOT NULL UNIQUE,   
+  class        item_class   NOT NULL,          
+  description  TEXT,
+  active       BOOLEAN      NOT NULL DEFAULT TRUE,
+  created_at   TIMESTAMPTZ  NOT NULL DEFAULT now(),
+  updated_at   TIMESTAMPTZ  NOT NULL DEFAULT now()
+);

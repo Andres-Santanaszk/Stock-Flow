@@ -62,10 +62,10 @@ def migrate(load_seed=True):
                 try:
                     run_sql_file(conn, seed_path)
                     conn.commit()
-                    print(f"✔ OK {SEED_FILE}")
+                    print(f"OK {SEED_FILE}")
                 except Exception as e:
                     conn.rollback()
-                    print(f"✖ ERROR en {SEED_FILE}: {e}")
+                    print(f"ERROR en {SEED_FILE}: {e}")
                     raise
     finally:
         conn.close()

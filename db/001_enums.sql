@@ -7,13 +7,13 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
-  CREATE TYPE item_type AS ENUM ('finished_product', 'raw_material', 'component', 'consumable');
+  CREATE TYPE item_class AS ENUM ('finished_product', 'raw_material', 'component', 'consumable');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 
 DO $$ BEGIN
   CREATE TYPE mov_reason AS ENUM (
-    'return_in', 'return_out', 'scrap', 'damage', 'shipping',
+    'sale', 'purchase', 'return_in', 'return_out', 'scrap', 'damage', 'shipping',
     'transfer_in', 'transfer_out', 'manufacture_consume', 'manufacture_produce', 'relocation'
   );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
