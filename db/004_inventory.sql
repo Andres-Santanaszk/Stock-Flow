@@ -7,7 +7,6 @@ CREATE TABLE IF NOT EXISTS items (
   description   TEXT NOT NULL DEFAULT '',
   category_id   INT          REFERENCES categories(id_category) ON DELETE SET NULL,
   pack_type     item_pack_type NOT NULL DEFAULT 'unit',
-  max_capacity  NUMERIC(18,3) NOT NULL DEFAULT 0,
   active        BOOLEAN       NOT NULL DEFAULT TRUE,
   created_at    TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
   updated_at    TIMESTAMPTZ   NOT NULL DEFAULT NOW()
@@ -56,8 +55,7 @@ CREATE TABLE IF NOT EXISTS item_containers (
   id_container INT NOT NULL REFERENCES containers(id_container) ON DELETE RESTRICT,
   location     VARCHAR(64) NOT NULL,
   qty          NUMERIC(18,3) NOT NULL DEFAULT 0 CHECK (qty >= 0),
-  CONSTRAINT uq_item_containers_container_location UNIQUE (id_container, location),
-  CONSTRAINT uq_item_containers_container_location_item UNIQUE (id_container, location, id_item)
+  CONSTRAINT uq_item_containers_container_location UNIQUE (id_container, location)
 );
 
 CREATE INDEX IF NOT EXISTS ix_item_containers_item ON item_containers (id_item);
@@ -68,27 +66,31 @@ CREATE TABLE IF NOT EXISTS movements (
   id_mov      BIGSERIAL PRIMARY KEY,
   id_item     INT  NOT NULL REFERENCES items(id_item) ON DELETE RESTRICT,
   id_user     INT  NOT NULL REFERENCES users(id_user) ON DELETE RESTRICT,
-  type        mov_type  NOT NULL,
+  type        mov_type     NOT NULL,
   qty         NUMERIC(18,3) NOT NULL CHECK (qty <> 0),
-  created_at  TIMESTAMPTZ   NOT NULL DEFAULT NOW(),
-  reason      mov_reason    NOT NULL,
+  created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
+  reason      mov_reason   NOT NULL,
+
   from_container_id INT REFERENCES containers(id_container),
   from_location     VARCHAR(64),
   to_container_id   INT REFERENCES containers(id_container),
   to_location       VARCHAR(64),
 
+  -- Razones válidas por tipo
   CONSTRAINT chk_type_reason_consistency CHECK (
-    (type = 'IN'  AND reason IN ('purchase', 'return_in','transfer_in','manufacture_produce')) OR
-    (type = 'OUT' AND reason IN ('sale', 'shipping','return_out','transfer_out','manufacture_consume')) OR
+    (type = 'IN'  AND reason IN ('purchase','return_in','transfer_in','manufacture_produce')) OR
+    (type = 'OUT' AND reason IN ('sale','shipping','return_out','transfer_out','manufacture_consume')) OR
     (type = 'ADJUST' AND reason IN ('scrap','damage','relocation'))
   ),
 
+  -- Signo de qty por tipo
   CONSTRAINT chk_mov_qty_sign CHECK (
     (type = 'IN'  AND qty > 0) OR
     (type = 'OUT' AND qty < 0) OR
     (type = 'ADJUST')
   ),
 
+  -- Campos obligatorios según tipo
   CONSTRAINT chk_mov_locations_by_type CHECK (
     (type = 'IN'
       AND to_container_id IS NOT NULL AND to_location IS NOT NULL
@@ -107,16 +109,18 @@ CREATE TABLE IF NOT EXISTS movements (
     ))
   ),
 
-  CONSTRAINT fk_from_container_location_item
-  FOREIGN KEY (from_container_id, from_location, id_item)
-  REFERENCES item_containers (id_container, location, id_item)
-  DEFERRABLE INITIALLY DEFERRED, -- usado debido a que si no lo usamos, verifica que exista antes de que realmente exista, y siemrpe daria error.
+  -- FKs a la UBICACIÓN (container+location) en item_containers
+  CONSTRAINT fk_from_container_location
+    FOREIGN KEY (from_container_id, from_location)
+    REFERENCES item_containers (id_container, location)
+    DEFERRABLE INITIALLY DEFERRED,
 
-  CONSTRAINT fk_to_container_location_item
-  FOREIGN KEY (to_container_id, to_location, id_item)
-  REFERENCES item_containers (id_container, location, id_item)
-  DEFERRABLE INITIALLY DEFERRED,
+  CONSTRAINT fk_to_container_location
+    FOREIGN KEY (to_container_id, to_location)
+    REFERENCES item_containers (id_container, location)
+    DEFERRABLE INITIALLY DEFERRED,
 
+  -- Evita FROM y TO iguales
   CONSTRAINT chk_from_to_diff CHECK (
     NOT (
       from_container_id IS NOT NULL AND to_container_id IS NOT NULL
@@ -126,8 +130,9 @@ CREATE TABLE IF NOT EXISTS movements (
   )
 );
 
-
+-- Índices útiles
 CREATE INDEX IF NOT EXISTS ix_movements_item_created_at ON movements (id_item, created_at);
-CREATE INDEX IF NOT EXISTS ix_movements_created_at ON movements (created_at);
-CREATE INDEX IF NOT EXISTS ix_movements_user ON movements (id_user);
-
+CREATE INDEX IF NOT EXISTS ix_movements_created_at      ON movements (created_at);
+CREATE INDEX IF NOT EXISTS ix_movements_user            ON movements (id_user);
+CREATE INDEX IF NOT EXISTS ix_movements_from_loc        ON movements (from_container_id, from_location);
+CREATE INDEX IF NOT EXISTS ix_movements_to_loc          ON movements (to_container_id, to_location);

@@ -1,6 +1,7 @@
 # ============================================================
 # Proyecto: Stock-Flow
 # Requisitos de entorno y dependencias
+# pip install -r requirements.txt
 # ============================================================
 
 # Python 3.10+ recomendado (comentario informativo)

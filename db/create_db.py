@@ -7,7 +7,7 @@ from config.settings import (
 
 import os
 PGSUPERUSER = os.getenv("PGSUPERUSER", "postgres")
-PGSUPERPASSWORD = os.getenv("PGSUPERPASSWORD", "---> CAMBIA ESTO") # Aqui cambian por la contraseña que usaron para
+PGSUPERPASSWORD = os.getenv("PGSUPERPASSWORD", "Falcored94") # Aqui cambian por la contraseña que usaron para
 PGSUPERDB = os.getenv("PGSUPERDB", "postgres")              # la instalacion de postgres
 
 
