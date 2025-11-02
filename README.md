@@ -4,7 +4,9 @@ Instalar Python 3.10.6 (agregar al PATH)
 
 Crear entorno virtual → python -m venv venv
 
-Activar entorno (.\venv\Scripts\Activate o source venv/bin/activate)
+Activar entorno (.\venv\Scripts\Activate) 
+
+LINUX: source venv/bin/activate
 
 Instalar dependencias → pip install -r requirements.txt
 
