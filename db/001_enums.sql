@@ -18,9 +18,10 @@ DO $$ BEGIN
   );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
+-- Tipo de empaque
 DO $$ BEGIN
   CREATE TYPE item_pack_type AS ENUM (
-    'unit',        -- pieza suelta, unidad
+    'unit',        -- pieza suelta
     'package',     -- paquete pequeño
     'box',         -- caja o master pack
     'bottle',      -- botella o frasco
@@ -28,7 +29,11 @@ DO $$ BEGIN
     'roll',        -- rollo
     'meter',       -- longitud
     'liter',       -- volumen
+    'milliliter',  -- mililitros
+    'gram',        -- gramos
+    'kilogram',    -- kilogramos
     'set'          -- conjunto o kit
   );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
 

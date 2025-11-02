@@ -54,7 +54,7 @@ CREATE TABLE IF NOT EXISTS item_containers (
   id_item      INT NOT NULL REFERENCES items(id_item) ON DELETE RESTRICT,
   id_container INT NOT NULL REFERENCES containers(id_container) ON DELETE RESTRICT,
   location     VARCHAR(64) NOT NULL,
-  qty          NUMERIC(18,3) NOT NULL DEFAULT 0 CHECK (qty >= 0),
+  qty          INT NOT NULL DEFAULT 0 CHECK (qty >= 0),
   CONSTRAINT uq_item_containers_container_location UNIQUE (id_container, location)
 );
 
@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS movements (
   id_item     INT  NOT NULL REFERENCES items(id_item) ON DELETE RESTRICT,
   id_user     INT  NOT NULL REFERENCES users(id_user) ON DELETE RESTRICT,
   type        mov_type     NOT NULL,
-  qty         NUMERIC(18,3) NOT NULL CHECK (qty <> 0),
+  qty         INT NOT NULL CHECK (qty <> 0),
   created_at  TIMESTAMPTZ  NOT NULL DEFAULT NOW(),
   reason      mov_reason   NOT NULL,
 
