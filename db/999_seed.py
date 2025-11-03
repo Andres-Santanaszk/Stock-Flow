@@ -5,9 +5,10 @@ from db.connection import get_connection
 def seed_roles_permissions(cur):
     cur.execute("""
     INSERT INTO roles (id, name, description) VALUES
-      (1,'admin','Administrador'),
-      (2,'operator','Operador de almacén'),
-      (3,'viewer','Solo lectura')
+      (1, 'Administrador', 'Acceso total al sistema'),
+      (2, 'Líder de Almacén', 'Gestiona operaciones de almacén'),
+      (3, 'Recursos Humanos', 'Alta y administración de usuarios'),
+      (4, 'Operador de Almacén', 'Ejecuta movimientos de inventario')
     ON CONFLICT (id) DO UPDATE
       SET name = EXCLUDED.name,
           description = EXCLUDED.description;
@@ -15,10 +16,14 @@ def seed_roles_permissions(cur):
 
     cur.execute("""
     INSERT INTO permissions (id, code, description) VALUES
-      (1,'items.read','Puede ver items'),
-      (2,'items.write','Puede crear/editar items'),
-      (3,'movements.post','Puede registrar movimientos'),
-      (4,'users.manage','Puede administrar usuarios')
+      (1, 'items.read', 'Puede ver ítems del inventario'),
+      (2, 'items.write', 'Puede crear o editar ítems'),
+      (3, 'movements.post', 'Puede registrar movimientos de inventario'),
+      (4, 'users.manage', 'Puede administrar usuarios y roles'),
+      (5, 'inventory.view', 'Puede ver el estado del inventario'),
+      (6, 'locations.view', 'Puede ver ubicaciones'),
+      (7, 'reports.view', 'Puede acceder al historial de movimientos'),
+      (8, 'catalogs.manage', 'Puede gestionar catálogos base (marcas, categorías, etc.)')
     ON CONFLICT (id) DO UPDATE
       SET code = EXCLUDED.code,
           description = EXCLUDED.description;
@@ -26,11 +31,17 @@ def seed_roles_permissions(cur):
 
     cur.execute("""
     INSERT INTO role_permissions (role_id, permission_id) VALUES
-      (1,1),(1,2),(1,3),(1,4),
-      (2,1),(2,2),(2,3),
-      (3,1)
+      -- Administrador: todos los permisos
+      (1,1),(1,2),(1,3),(1,4),(1,5),(1,6),(1,7),(1,8),
+      -- Líder de Almacén
+      (2,1),(2,2),(2,3),(2,5),(2,6),(2,7),
+      -- Recursos Humanos
+      (3,4),
+      -- Operador de Almacén
+      (4,1),(4,3),(4,5),(4,6)
     ON CONFLICT DO NOTHING;
     """)
+
 
 def seed_users(cur):
     cur.execute("""
