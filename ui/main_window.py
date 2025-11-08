@@ -2,13 +2,14 @@ import sys
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout,
     QHBoxLayout, QPushButton, QLabel, QStackedWidget,
-    QFrame
+    QFrame, QDialog
 )
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QFont, QColor, QIcon
 from PySide6.QtSvgWidgets import QSvgWidget
 from pathlib import Path
 import qdarktheme
+from ui.login_window import LoginDialog
 
 
 
@@ -269,7 +270,15 @@ class MainWindow(QMainWindow):
         """Simulación de la acción de cerrar sesión."""
         print("INFO: Usuario cerró sesión (Logout).")
         # En una aplicación real, aquí se cerraría la ventana de la App y se abriría la de Login.
-        QApplication.quit()
+        self.close()
+        login_dialog = LoginDialog()
+        if login_dialog.exec() == QDialog.Accepted and login_dialog.valid_login:
+            # Si el login fue correcto, reabrir la ventana principal
+            main_window = MainWindow()
+            main_window.show()
+            # Mantener la app viva: pasamos la referencia al QApplication
+            app.main_window = main_window
+        
 
 if __name__ == "__main__":
     # La aplicación de PySide6
@@ -284,11 +293,18 @@ if __name__ == "__main__":
     icon_path = BASE_DIR / "utils" / "icon.png"
     app_icon = QIcon(str(icon_path))
     app.setWindowIcon(app_icon)
-    
-    # Configuramos la fuente global
     app.setFont(QFont("Segoe UI"))
     
-    window = MainWindow()
-    window.show()
+    login_dialog = LoginDialog()
+    if login_dialog.exec() == QDialog.Accepted and login_dialog.valid_login:
+        main_window = MainWindow()
+        main_window.show()
+        app.main_window = main_window  # mantener referencia
+        sys.exit(app.exec())
+    else:
+        # Si el login se cancela o es incorrecto → cerrar app
+        print("INFO: Inicio de sesión cancelado o inválido.")
+        sys.exit(0)
+
     
     sys.exit(app.exec())
