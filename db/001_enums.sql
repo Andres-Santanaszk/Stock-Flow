@@ -3,7 +3,7 @@ DO $$ BEGIN
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
-  CREATE TYPE container_type AS ENUM ('Rack', 'Shelf', 'Bin', 'Pallet', 'ScrapArea', 'Cart');
+  CREATE TYPE location_type AS ENUM ('Rack', 'Shelf', 'Bin', 'Pallet', 'ScrapArea', 'Cart');
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 DO $$ BEGIN
@@ -27,11 +27,6 @@ DO $$ BEGIN
     'bottle',      -- botella o frasco
     'bag',         -- bolsa
     'roll',        -- rollo
-    'meter',       -- longitud
-    'liter',       -- volumen
-    'milliliter',  -- mililitros
-    'gram',        -- gramos
-    'kilogram',    -- kilogramos
     'set'          -- conjunto o kit
   );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;

@@ -155,6 +155,7 @@ temp/
 # specifics
 quick_hardcoded.py
 initdb/
+test_DATA_GUI.py
 
 # =====================================
 # END OF FILE

@@ -2,7 +2,7 @@ import sys
 from PySide6.QtWidgets import QApplication, QLabel, QMainWindow, QWidget, QVBoxLayout
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from db.connection import get_connection  # usa tu connection.py
+from db.connection import get_connection  
 
 def fetch_all_roles():
     """
@@ -11,7 +11,7 @@ def fetch_all_roles():
     """
     conn = None
     try:
-        conn = get_connection()  # tal cual, sin setear client_encoding
+        conn = get_connection()  
         with conn, conn.cursor() as cur:
             cur.execute("SELECT name, description FROM roles ORDER BY id ASC;")
             rows = cur.fetchall()
