@@ -108,7 +108,7 @@ class Item:
                 raise ValueError(f"No existe items.id_item = {self.id_item}")
 
             conn.commit()
-            self.updated_at = row[0]   # Valor que puso el trigger
+            self.updated_at = row[0]  
             return self.updated_at
         except Exception as e:
             conn.rollback()
@@ -166,7 +166,7 @@ class Item:
             conn.close()
 
     @staticmethod
-    def search_by_name(name_fragment, limit=100, offset=0):
+    def search_by_name(name_fragment, limit=100, offset=0): #Limit son los resultados que queremos, offset los que queremos ignorar
         sql = """
         SELECT
             id_item, name, sku, barcode, brand_id, description, category_id,
@@ -203,28 +203,112 @@ class Item:
         finally:
             cur.close()
             conn.close()
-        
-    def to_display_dict(self, fields=None):
-        data = {
-            "id_item": self.id_item,
-            "name": self.name,
-            "sku": self.sku,
-            "barcode": self.barcode or "",
-            "brand_id": self.brand_id or "",
-            "description": self.description or "",
-            "category_id": self.category_id or "",
-            "pack_type": ITEM_PACK_TYPE_ES.get(self.pack_type, self.pack_type),
-            "min_qty": self.min_qty,
-            "active": BOOL_ES.get(self.active, str(self.active)),
-            "created_at": self.created_at.strftime("%d/%m/%Y %H:%M") if self.created_at else "",
-            "updated_at": self.updated_at.strftime("%d/%m/%Y %H:%M") if self.updated_at else "",
-        }
-
-        if fields is None:
-            fields = data.keys()
             
-        return {ITEM_LABELS_ES[k]: data[k] for k in fields if k in data}
+    @staticmethod
+    def search_by_category(category_id, limit=100, offset=0):
+        """
+        Busca todos los ítems que pertenecen a una categoría específica,
+        con paginación.
+        """
+        sql = """
+        SELECT
+            id_item, name, sku, barcode, brand_id, description, category_id,
+            pack_type, min_qty, active, created_at, updated_at
+        FROM items
+        WHERE category_id = %s  -- <-- La condición de búsqueda
+        ORDER BY name
+        LIMIT %s OFFSET %s;
+        """
+        
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (category_id, limit, offset))
+            rows = cur.fetchall()
+
+            results = []
+            for row in rows:
+                results.append(Item(
+                    id_item=row[0],
+                    name=row[1],
+                    sku=row[2],
+                    barcode=row[3],
+                    brand_id=row[4],
+                    description=row[5],
+                    category_id=row[6],
+                    pack_type=row[7],
+                    min_qty=row[8],
+                    active=row[9],
+                    created_at=row[10],
+                    updated_at=row[11],
+                ))
+            return results
+        finally:
+            cur.close()
+            conn.close()
+            
+    @staticmethod
+    def get_all_brands_for_combo():
+        sql = "SELECT id_brand, name FROM brands ORDER BY name;"
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql)
+            
+            return cur.fetchall()
+        except Exception as e:
+            raise e
+        finally:
+            cur.close()
+            conn.close()
+
+    @staticmethod
+    def get_all_categories_for_combo():
+        sql = "SELECT id_category, name FROM categories WHERE active = TRUE ORDER BY name;"
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql)
+            return cur.fetchall()
+        except Exception as e:
+            raise e
+        finally:
+            cur.close()
+            conn.close()      
+    
+    @staticmethod
+    def search_items_for_display(name_fragment, limit=100, offset=0):
+        """
+        Busca ítems para MOSTRAR en una tabla (con JOINs) y
+        soporta paginación (LIMIT/OFFSET).
+        """
+        sql = """
+        SELECT
+            i.id_item, 
+            i.name AS item_name, 
+            i.sku,
+            i.active,
+            b.name AS brand_name,   
+            c.name AS category_name 
+        FROM items i
+        LEFT JOIN brands b ON i.brand_id = b.id_brand
+        LEFT JOIN categories c ON i.category_id = c.id_category
+        WHERE (%s = '' OR LOWER(i.name) LIKE LOWER(%s))
+        ORDER BY i.name
+        LIMIT %s OFFSET %s; 
+        """
+        
+        pattern = f"%{name_fragment}%" if name_fragment else ""
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (name_fragment or "", pattern, limit, offset))
+            
+            return cur.fetchall()
+        finally:
+            cur.close()
+            conn.close() 
    
         
     def __repr__(self):
-        return f"<Item name={self.name!r} sku={self.sku!r} id={self.id_item}>"
+        return f"<Item name={self.name} sku={self.sku} id={self.id_item}>"

@@ -1,15 +1,14 @@
-# ui/register_hub.py
-
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QDialog, 
-    QLabel, QToolButton  # <-- Cambiado
+    QLabel, QToolButton  
 )
-from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve  # <-- Añadido
+from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve  
 from PySide6.QtGui import QIcon, QFont
 from pathlib import Path
 
 from ui.item_form import ItemFormWidget
-from ui.simple_forms import BrandFormWidget, CategoryFormWidget
+from ui.brand_form import BrandFormWidget
+from ui.category_form import CategoryFormWidget
 
 # Ruta base que apunta a la carpeta 'ui'
 BASE_DIR = Path(__file__).resolve().parent
@@ -25,7 +24,6 @@ class AnimatedHubButton(QToolButton):
         if icon_path.exists():
             icon.addFile(str(icon_path))
         else:
-            print(f"ADVERTENCIA: No se encontró icono {icon_path}. Usando fallback.")
             icon = QIcon.fromTheme(fallback_name)
         self.setIcon(icon)
 
@@ -132,7 +130,7 @@ class RegisterHubWidget(QWidget):
         form = ItemFormWidget(dlg)
         lay = QVBoxLayout(dlg)
         lay.addWidget(form)
-        dlg.resize(520, 500)
+        dlg.resize(850, 620)
         dlg.exec()
 
     def _open_brand_dialog(self):
@@ -141,7 +139,7 @@ class RegisterHubWidget(QWidget):
         form = BrandFormWidget(dlg)
         lay = QVBoxLayout(dlg)
         lay.addWidget(form)
-        dlg.resize(480, 320)
+        dlg.resize(600, 500)
         dlg.exec()
 
     def _open_category_dialog(self):
@@ -150,5 +148,5 @@ class RegisterHubWidget(QWidget):
         form = CategoryFormWidget(dlg)
         lay = QVBoxLayout(dlg)
         lay.addWidget(form)
-        dlg.resize(520, 380)
+        dlg.resize(600, 500)
         dlg.exec()

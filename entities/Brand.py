@@ -1,0 +1,88 @@
+from db.connection import get_connection
+
+class Brand:
+    def __init__(self, id_brand=None, name=None, description=None, website=None, contact_email=None, created_at=None):
+        self.id_brand = id_brand
+        self.name = name
+        self.description = description
+        self.website = website
+        self.contact_email = contact_email
+        self.created_at = created_at
+        
+    
+    def add_brand(self):
+        if self.id_brand is not None:
+            return self.update()
+
+        if self.name is None:
+            raise ValueError("El atributo 'name' no puede ser nulo para agregar una nueva marca.")
+
+        sql = """
+        INSERT INTO brands (name, description, website, contact_email)
+        VALUES (%s, %s, %s, %s)
+        RETURNING id_brand, created_at;
+        """
+        
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (
+                self.name,
+                self.description,
+                self.website,
+                self.contact_email
+            ))
+            row = cur.fetchone()
+            conn.commit()
+
+            # Actualiza el objeto con los datos de la BD
+            self.id_brand = row[0]
+            self.created_at = row[1]
+            return self.id_brand
+            
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            cur.close()
+            conn.close()
+
+    def update(self):
+        if self.id_brand is None:
+            raise ValueError("No se puede actualizar una marca sin id_brand.")
+        
+        if self.name is None:
+            raise ValueError("El atributo 'name' no puede ser nulo para actualizar.")
+
+        sql = """
+        UPDATE brands
+           SET name = %s,
+               description = %s,
+               website = %s,
+               contact_email = %s
+         WHERE id_brand = %s;
+        """
+        
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (
+                self.name,
+                self.description,
+                self.website,
+                self.contact_email,
+                self.id_brand
+            ))
+            conn.commit()
+            return self.id_brand 
+            
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            cur.close()
+            conn.close()
+
+    def __repr__(self):
+        return f"<Brand name={self.name} id={self.id_brand}>"
+
