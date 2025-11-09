@@ -10,7 +10,6 @@ PGSUPERUSER = os.getenv("PGSUPERUSER", "postgres")
 PGSUPERPASSWORD = os.getenv("PGSUPERPASSWORD", "X")  # cambia según tu entorno
 PGSUPERDB = os.getenv("PGSUPERDB", "postgres")
 
-
 def ensure_role():
     print(f"Verificando rol '{DB_USER}' ...")
     conn = None
@@ -44,7 +43,6 @@ def ensure_role():
     finally:
         if conn:
             conn.close()
-
 
 def ensure_database():
     print(f"Verificando base '{DB_NAME}' ...")

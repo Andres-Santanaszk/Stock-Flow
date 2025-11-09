@@ -13,12 +13,10 @@ DEFAULT_FILES = [
 
 SEED_FILE = "999_seed.sql" 
 
-
 def run_sql_file(conn, path):
     with open(path, "r", encoding="utf-8") as f, conn.cursor() as cur:
         sql_text = f.read()
         cur.execute(sql_text)
-
 
 def migrate(load_seed=True):
     conn = psycopg2.connect(

@@ -4,7 +4,6 @@ from psycopg2 import OperationalError
 from config.settings import DB_USER, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT
 
 def get_connection():
-    """Crea una conexión nueva a la base de datos."""
     try:
         conn = psycopg2.connect(
             user=DB_USER,

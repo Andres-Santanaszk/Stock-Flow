@@ -11,7 +11,7 @@ from pathlib import Path
 from ui.item_form import ItemFormWidget
 from ui.simple_forms import BrandFormWidget, CategoryFormWidget
 
-# Ruta base (apunta a la carpeta 'ui')
+# Ruta base que apunta a la carpeta 'ui'
 BASE_DIR = Path(__file__).resolve().parent
 
 class AnimatedHubButton(QToolButton):

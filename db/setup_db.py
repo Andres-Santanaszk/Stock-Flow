@@ -1,4 +1,3 @@
-# db/setup_db.py
 import os
 import importlib.util
 from db.create_db import ensure_database, ensure_role
@@ -16,18 +15,18 @@ def run_python_seed_by_path(seed_path: str, load_demo: bool):
     mod.run(load_demo=load_demo)
 
 if __name__ == "__main__":
-    # 1) Bootstrap de rol y DB
+    # rol y DB
     ensure_role()
     ensure_database()
 
-    # 2) Migraciones
+    # Migraciones
     load_seed = os.getenv("LOAD_SEED", "on").lower() in ("1", "true", "on", "yes")
-    migrate(load_seed=load_seed)  # esto sigue ejecutando 999_seed.sql si existe
+    migrate(load_seed=load_seed) 
 
-    # 3) Seeds en Python (db/999_seed.py)
+    # Seeds en python 
     if load_seed:
         load_demo = os.getenv("LOAD_DEMO_SEEDS", "off").lower() in ("1", "true", "on", "yes")
         seed_path = os.path.join(os.path.dirname(__file__), "999_seed.py")
-        print("\n▶ Ejecutando 999_seed.py ...")
+        print("\nEjecutando 999_seed.py ...")
         run_python_seed_by_path(seed_path, load_demo=load_demo)
-        print("✔ Seeds Python ejecutadas correctamente.")
+        print("Seeds Python ejecutadas correctamente.")

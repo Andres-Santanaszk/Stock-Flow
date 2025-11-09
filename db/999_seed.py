@@ -1,9 +1,5 @@
-# db/999_seeds.py
 import os
 from db.connection import get_connection
-
-# --- (Todas tus funciones seed_... van aquí sin cambios) ---
-# --- (seed_roles_permissions, seed_users, seed_brands, etc...) ---
 
 def seed_roles_permissions(cur):
     cur.execute("""
@@ -156,12 +152,11 @@ def sync_all_sequences(cur):
         ('categories', 'id_category'),
         ('locations', 'id_location'),
         ('items', 'id_item'),
-        ('movements', 'id_mov') # Aunque no insertamos ID, es buena práctica
+        ('movements', 'id_mov') 
     ]
     
     print("--- Sincronizando secuencias SERIAL ---")
     for table, id_col in tables_with_sequences:
-        # El nombre de la secuencia es universalmente 'tabla_columna_seq'
         seq_name = f"{table}_{id_col}_seq"
         sql = f"""
         SELECT setval(
