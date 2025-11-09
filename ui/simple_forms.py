@@ -6,9 +6,8 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 
 from db.connection import get_connection
-from ui.translations import ITEM_CLASS_ES  # para el enum de categorías
+from ui.translations import ITEM_CLASS_ES 
 
-# ---------- Formulario Marca ----------
 class BrandFormWidget(QWidget):
     """
     Inserta en brands (name UNIQUE, description, website, contact_email)

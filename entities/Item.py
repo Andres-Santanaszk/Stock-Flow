@@ -34,7 +34,7 @@ class Item:
     def add_item(self):
         if self.id_item is not None:
             return self.update()
-
+        
         sql = """
         INSERT INTO items
             (name, sku, barcode, brand_id, description, category_id, pack_type, min_qty, active)
@@ -42,7 +42,6 @@ class Item:
             (%s,   %s,  %s,      %s,       %s,          %s,          %s,        %s,      %s)
         RETURNING id_item, created_at, updated_at;
         """
-
         conn = get_connection()
         try:
             cur = conn.cursor()
@@ -89,7 +88,6 @@ class Item:
          WHERE id_item = %s
         RETURNING updated_at;
         """
-
         conn = get_connection()
         try:
             cur = conn.cursor()

@@ -7,7 +7,7 @@ from config.settings import (
 import os
 
 PGSUPERUSER = os.getenv("PGSUPERUSER", "postgres")
-PGSUPERPASSWORD = os.getenv("PGSUPERPASSWORD", "Falcored94")  # cambia según tu entorno
+PGSUPERPASSWORD = os.getenv("PGSUPERPASSWORD", "X")  # cambia según tu entorno
 PGSUPERDB = os.getenv("PGSUPERDB", "postgres")
 
 

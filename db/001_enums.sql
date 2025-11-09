@@ -18,7 +18,7 @@ DO $$ BEGIN
   );
 EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
--- Tipo de empaque
+
 DO $$ BEGIN
   CREATE TYPE item_pack_type AS ENUM (
     'unit',        -- pieza suelta

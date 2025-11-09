@@ -2,6 +2,9 @@
 import os
 from db.connection import get_connection
 
+# --- (Todas tus funciones seed_... van aquí sin cambios) ---
+# --- (seed_roles_permissions, seed_users, seed_brands, etc...) ---
+
 def seed_roles_permissions(cur):
     cur.execute("""
     INSERT INTO roles (id, name, description) VALUES
@@ -66,7 +69,6 @@ def seed_brands(cur):
     """)
 
 def seed_categories(cur):
-    # Usa SOLO valores válidos del enum item_class: finished_product, raw_material, component, consumable
     cur.execute("""
     INSERT INTO categories (id_category, name, class, description, active) VALUES
       (1,'Equipo de Protección','consumable','Guantes, cascos, gafas, etc.', TRUE),
@@ -80,7 +82,6 @@ def seed_categories(cur):
     """)
 
 def seed_locations(cur):
-    # Usa SOLO valores válidos del enum location_type: Rack, Shelf, Bin, Pallet, ScrapArea, Cart
     cur.execute("""
     INSERT INTO locations (id_location, type, code, description, active) VALUES
       (1,'Rack','RACK-A1','Rack A1 principal', TRUE),
@@ -116,7 +117,6 @@ def seed_items(cur):
 
 
 def seed_demo_movements(cur):
-    # IN: entradas de compra (qty positiva; el trigger ya deja el signo correcto)
     cur.execute("""
     INSERT INTO movements (id_item, id_user, type, reason, qty, to_location_id)
     VALUES
@@ -127,7 +127,6 @@ def seed_demo_movements(cur):
     ON CONFLICT DO NOTHING;
     """)
 
-    # OUT: salidas por venta
     cur.execute("""
     INSERT INTO movements (id_item, id_user, type, reason, qty, from_location_id)
     VALUES
@@ -136,13 +135,46 @@ def seed_demo_movements(cur):
     ON CONFLICT DO NOTHING;
     """)
 
-    # ADJUST: ajuste negativo por daño
     cur.execute("""
     INSERT INTO movements (id_item, id_user, type, reason, qty, from_location_id)
     VALUES
       (1, 1, 'ADJUST', 'damage', 5, 5)
     ON CONFLICT DO NOTHING;
     """)
+
+def sync_all_sequences(cur):
+    """
+    Sincroniza todas las secuencias SERIAL con el MAX(id) de sus tablas.
+    Esto es VITAL después de insertar IDs manualmente en un script de seed.
+    """
+    tables_with_sequences = [
+        # (nombre_tabla, nombre_columna_id)
+        ('roles', 'id'),
+        ('permissions', 'id'),
+        ('users', 'id_user'),
+        ('brands', 'id_brand'),
+        ('categories', 'id_category'),
+        ('locations', 'id_location'),
+        ('items', 'id_item'),
+        ('movements', 'id_mov') # Aunque no insertamos ID, es buena práctica
+    ]
+    
+    print("--- Sincronizando secuencias SERIAL ---")
+    for table, id_col in tables_with_sequences:
+        # El nombre de la secuencia es universalmente 'tabla_columna_seq'
+        seq_name = f"{table}_{id_col}_seq"
+        sql = f"""
+        SELECT setval(
+            '{seq_name}', 
+            COALESCE((SELECT MAX({id_col}) FROM {table}), 0) + 1, 
+            false
+        );
+        """
+        try:
+            cur.execute(sql)
+            print(f"Secuencia '{seq_name}' sincronizada.")
+        except Exception as e:
+            print(f"ADVERTENCIA: No se pudo sincronizar '{seq_name}'. {e}")
 
 def run(load_demo=False):
     conn = get_connection()
@@ -157,6 +189,9 @@ def run(load_demo=False):
                 seed_items(cur)
                 if load_demo:
                     seed_demo_movements(cur)
+                
+                sync_all_sequences(cur) 
+                
         print("999_seeds.py ejecutado correctamente.")
     finally:
         conn.close()
