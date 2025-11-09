@@ -10,7 +10,8 @@ from PySide6.QtSvgWidgets import QSvgWidget
 from pathlib import Path
 import qdarktheme
 from ui.login_window import LoginDialog
-
+from ui.item_form import ItemFormWidget
+from ui.register_hub import RegisterHubWidget
 
 
 
@@ -166,7 +167,7 @@ class MainWindow(QMainWindow):
         # Mapeo de botones a sus títulos y IDs de permiso
         self.button_map = {
             "Dashboard": ("🏠 Inicio", "Dashboard"),
-            "Registrar_Item": ("📝 Registrar item", "register_item"),
+            "Registrar_Item": ("📝 Registro", "register_item"),
             # Módulo 2: Operaciones de Inventario
             "Movimientos de inventario": ("📦 Movimientos", "Inventory"),
             # Módulo 4: Visualización de Inventario
@@ -218,14 +219,16 @@ class MainWindow(QMainWindow):
         self.sidebar_layout.addWidget(user_info_frame)
 
     def _setup_central_views(self):
-        """Crea y añade los widgets de marcador de posición al QStackedWidget."""
-        
-        # Mapeo de botones a widgets
+        """Crea y añade los widgets al QStackedWidget."""
         self.view_widgets = {}
         for key, (title, _) in self.button_map.items():
-            widget = PlaceholderWidget(title, self.current_user_role)
+            if key == "Registrar_Item":  # 👈 clave que ya tienes en el sidebar
+                widget = RegisterHubWidget(self)   # ← aquí va el hub con 3 botones
+            else:
+                widget = PlaceholderWidget(title, self.current_user_role)
             self.view_widgets[key] = widget
             self.stacked_widget.addWidget(widget)
+
 
     def _switch_view(self, key, checked):
         """Maneja el cambio de vista en el QStackedWidget."""

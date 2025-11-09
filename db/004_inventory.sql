@@ -16,29 +16,18 @@ CREATE TABLE IF NOT EXISTS items (
 CREATE INDEX IF NOT EXISTS ix_items_name ON items (name);
 CREATE INDEX IF NOT EXISTS ix_items_brand_id ON items (brand_id);
 
--- Trigger para updated_at
-DO $$
+CREATE OR REPLACE FUNCTION update_timestamp()
+RETURNS TRIGGER AS $$
 BEGIN
-  IF NOT EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'set_updated_at') THEN
-    CREATE OR REPLACE FUNCTION set_updated_at() RETURNS TRIGGER AS $f$
-    BEGIN
-      NEW.updated_at := NOW();
-      RETURN NEW;
-    END;
-    $f$ LANGUAGE plpgsql;
-  END IF;
-END$$;
+  NEW.updated_at = NOW();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 
-DO $$
-BEGIN
-  IF NOT EXISTS (
-    SELECT 1 FROM pg_trigger WHERE tgname = 'trg_items_set_updated_at'
-  ) THEN
-    CREATE TRIGGER trg_items_set_updated_at
-      BEFORE UPDATE ON items
-      FOR EACH ROW EXECUTE FUNCTION set_updated_at();
-  END IF;
-END$$;
+CREATE TRIGGER trg_update_timestamp
+BEFORE UPDATE ON items
+FOR EACH ROW
+EXECUTE FUNCTION update_timestamp();
 
 CREATE TABLE IF NOT EXISTS locations (
   id_location   SERIAL PRIMARY KEY,
