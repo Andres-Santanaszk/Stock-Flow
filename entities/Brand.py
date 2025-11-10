@@ -35,7 +35,7 @@ class Brand:
             row = cur.fetchone()
             conn.commit()
 
-            # Actualiza el objeto con los datos de la BD
+
             self.id_brand = row[0]
             self.created_at = row[1]
             return self.id_brand

@@ -5,7 +5,7 @@ class Category:
         self,
         id_category=None,
         name=None,
-        class_=None,  # <-- Se usa 'class_' porque 'class' es palabra reservada
+        class_=None, 
         description=None,
         active=True,
         created_at=None,
@@ -13,7 +13,7 @@ class Category:
     ):
         self.id_category = id_category
         self.name = name
-        self.class_ = class_  # <-- Atributo interno
+        self.class_ = class_ 
         self.description = description
         self.active = active
         self.created_at = created_at
@@ -27,7 +27,6 @@ class Category:
         if self.id_category is not None:
             return self.update()
 
-        # Validación: 'name' y 'class_' son NOT NULL en la base de datos
         if self.name is None or self.class_ is None:
             raise ValueError("Los atributos 'name' y 'class_' no pueden ser nulos.")
 
@@ -62,10 +61,6 @@ class Category:
             conn.close()
 
     def update(self):
-        """
-        Actualiza una categoría existente en la base de datos.
-        El trigger 'trg_update_timestamp' de la BD actualizará 'updated_at'.
-        """
         if self.id_category is None:
             raise ValueError("No se puede actualizar una categoría sin id_category.")
         

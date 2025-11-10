@@ -41,7 +41,7 @@ class ItemFormWidget(QWidget):
         self.spnMinQty.setValue(0)
         
         self.txtDesc = QTextEdit()
-        self.txtDesc.setMinimumHeight(80) # Que no sea tan pequeño
+        self.txtDesc.setMinimumHeight(80)
 
         info_layout.addRow("Nombre:", self.txtName)
         info_layout.addRow("SKU:", self.txtSKU)
@@ -52,9 +52,6 @@ class ItemFormWidget(QWidget):
         stock_layout.addRow("Tipo de empaque:", self.cmbPack)
         stock_layout.addRow("Cantidad mínima: ", self.spnMinQty)
 
-        # --- Creación de las Tarjetas (QFrame) ---
-        
-        # Tarjeta 1: Info
         card_info = QFrame()
         card_info.setObjectName("CardFrame")
         card_info_layout = QVBoxLayout(card_info)
@@ -64,7 +61,7 @@ class ItemFormWidget(QWidget):
         card_info_layout.addLayout(info_layout)
         card_info_layout.addStretch()
 
-        # Tarjeta 2: Stock
+
         card_stock = QFrame()
         card_stock.setObjectName("CardFrame")
         card_stock_layout = QVBoxLayout(card_stock)
@@ -83,23 +80,21 @@ class ItemFormWidget(QWidget):
         card_desc_layout.addWidget(self.txtDesc)
         
         self.btnSave = QPushButton("Guardar Ítem")
-        self.btnSave.setObjectName("BtnSave") # ID para QSS
+        self.btnSave.setObjectName("BtnSave")
         
         self.btnClear = QPushButton("Limpiar")
-        self.btnClear.setObjectName("BtnClear") # ID para QSS
+        self.btnClear.setObjectName("BtnClear")
 
-        # --- Layout Principal ---
+
         
-        # Layout de las tarjetas superiores
         top_cards_layout = QHBoxLayout()
-        top_cards_layout.addWidget(card_info, 1)  # El '1' es para que estire
-        top_cards_layout.addWidget(card_stock, 1) # El '1' es para que estire
+        top_cards_layout.addWidget(card_info, 1)  
+        top_cards_layout.addWidget(card_stock, 1) 
 
-        # Layout de botones
         btns_layout = QHBoxLayout()
         btns_layout.addStretch(1)
         btns_layout.addWidget(self.btnClear, 1)
-        btns_layout.addWidget(self.btnSave, 2) 
+        btns_layout.addWidget(self.btnSave, 1) 
         
         root_layout = QVBoxLayout(self)
         root_layout.setContentsMargins(20, 20, 20, 20) 
@@ -144,7 +139,6 @@ class ItemFormWidget(QWidget):
                 padding-bottom: 5px;
             }
 
-            /* --- [INICIO] MODIFICACIÓN --- */
             /* Widgets de formulario (QLineEdit, QComboBox, etc.) */
             QLineEdit, QTextEdit, QComboBox, QSpinBox {
                 padding: 11px; /* <-- Aumentado de 8px a 11px */
@@ -153,7 +147,6 @@ class ItemFormWidget(QWidget):
                 background-color: #424242;
                 font-size: 14px; /* <-- Añadido para que el texto sea más legible */
             }
-            /* --- [FIN] MODIFICACIÓN --- */
             
             /* Botón Principal (Guardar) */
             #BtnSave {
@@ -182,9 +175,6 @@ class ItemFormWidget(QWidget):
         """)
 
     def _load_combos(self):
-        """
-        Carga las marcas y categorías desde la BD en los QComboBox.
-        """
         try:
             self.cmbBrand.addItem("(Opcional)", userData=None)
             self.cmbCategory.addItem("(Opcional)", userData=None)

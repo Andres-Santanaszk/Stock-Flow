@@ -13,9 +13,6 @@ from ui.login_window import LoginDialog
 from ui.item_form import ItemFormWidget
 from ui.register_hub import RegisterHubWidget
 
-
-
-# Diccionario de roles y sus permisos (simulación)
 ROLES_PERMISSIONS = {
     "Administrador": ["Management", "Inventory", "Requests", "Visibility", "Dashboard", "management", "history", "administration", "register_item"],
     "Líder": ["Inventory", "Requests", "Visibility", "Dashboard"],
@@ -26,10 +23,6 @@ BASE_DIR = Path(__file__).resolve().parent
 logo_path = BASE_DIR / "utils" / "logo_white_letters.svg"
 
 class PlaceholderWidget(QFrame):
-    """
-    Widget de marcador de posición para cada módulo.
-    Muestra el nombre del módulo y el rol del usuario actual.
-    """
     def __init__(self, title, user_role, parent=None):
         super().__init__(parent)
         self.setFrameShape(QFrame.StyledPanel)
@@ -276,10 +269,8 @@ class MainWindow(QMainWindow):
         self.close()
         login_dialog = LoginDialog()
         if login_dialog.exec() == QDialog.Accepted and login_dialog.valid_login:
-            # Si el login fue correcto, reabrir la ventana principal
             main_window = MainWindow()
             main_window.show()
-            # Mantener la app viva: pasamos la referencia al QApplication
             app.main_window = main_window
         
 

@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QDialog, 
-    QLabel, QToolButton  
+    QLabel, QToolButton, QPushButton  
 )
 from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve  
 from PySide6.QtGui import QIcon, QFont
@@ -10,7 +10,7 @@ from ui.item_form import ItemFormWidget
 from ui.brand_form import BrandFormWidget
 from ui.category_form import CategoryFormWidget
 
-# Ruta base que apunta a la carpeta 'ui'
+# ruta base que apunta a la carpeta 'ui'
 BASE_DIR = Path(__file__).resolve().parent
 
 class AnimatedHubButton(QToolButton):
@@ -27,16 +27,15 @@ class AnimatedHubButton(QToolButton):
             icon = QIcon.fromTheme(fallback_name)
         self.setIcon(icon)
 
-        self.small_icon_size = QSize(48, 48)
-        self.large_icon_size = QSize(60, 60) # Tamaño al hacer hover
+        self.small_icon_size = QSize(150, 150)
+        self.large_icon_size = QSize(170, 170) 
         self.setIconSize(self.small_icon_size)
 
         self.grow_animation = QPropertyAnimation(self, b"iconSize")
         self.grow_animation.setEndValue(self.large_icon_size)
-        self.grow_animation.setDuration(150) # milisegundos
+        self.grow_animation.setDuration(150)
         self.grow_animation.setEasingCurve(QEasingCurve.OutQuad)
 
-        # Animación para "encoger" (Leave)
         self.shrink_animation = QPropertyAnimation(self, b"iconSize")
         self.shrink_animation.setEndValue(self.small_icon_size)
         self.shrink_animation.setDuration(150)
@@ -57,9 +56,18 @@ class RegisterHubWidget(QWidget):
         super().__init__(parent)
 
         self.lbl_title = QLabel("Gestor de Registros")
-        self.lbl_title.setFont(QFont("Segoe UI", 30, QFont.Bold))
+        self.lbl_title.setFont(QFont("Segoe UI", 48, QFont.Bold))
         self.lbl_title.setAlignment(Qt.AlignCenter)
-        self.lbl_title.setObjectName("HubTitle") 
+        self.lbl_title.setObjectName("HubTitle")
+
+        self.lbl_subtitle = QLabel("Selecciona una opción para comenzar")
+        self.lbl_subtitle.setFont(QFont("Segoe UI", 18)) 
+        self.lbl_subtitle.setAlignment(Qt.AlignCenter)
+        self.lbl_subtitle.setObjectName("HubSubtitle")
+
+        self.btn_update_link = QPushButton("¿Ya has registrado tu ítem? Actualízalo aquí")
+        self.btn_update_link.setObjectName("LinkButton") 
+        self.btn_update_link.setCursor(Qt.PointingHandCursor) 
 
         self.btn_item = AnimatedHubButton(
             "Registrar Ítem", 
@@ -77,11 +85,10 @@ class RegisterHubWidget(QWidget):
             "folder-new"
         )
 
-        # 3. Layout (MODIFICADO para centrar y poner en horizontal)
         
-        # Layout para los botones (Horizontal)
+
         button_layout = QHBoxLayout()
-        button_layout.setSpacing(25) # Espacio entre botones
+        button_layout.setSpacing(40) # Espacio entre botones
         button_layout.addWidget(self.btn_item)
         button_layout.addWidget(self.btn_brand)
         button_layout.addWidget(self.btn_category)
@@ -92,22 +99,35 @@ class RegisterHubWidget(QWidget):
         main_layout.setSpacing(30) 
 
         main_layout.addWidget(self.lbl_title)
+        
+        main_layout.addWidget(self.lbl_subtitle)
+        
+        main_layout.addStretch(1)
         main_layout.addLayout(button_layout) # <-- Añade el layout horizontal
-
-        # 4. Estilos QSS (MODIFICADO para QToolButton)
+        main_layout.addStretch(1)
+        
+        main_layout.addWidget(self.btn_update_link)
+        
         self.setStyleSheet("""
             #HubTitle {
                 color: #f7a51b; 
                 margin-bottom: 10px;
             }
+            #HubSubtitle {
+                color: #FFFFFF; /* Un color gris más sutil */
+                margin-bottom: 20px; /* Para separarlo del 'stretch' */
+            }
             
             QToolButton {
-                /* Quitamos text-align y padding-left, QToolButton lo maneja */
-                min-height: 140px;    /* <-- Alto del botón */
-                min-width: 160px;     /* <-- Ancho del botón */
-                font-size: 16px;      /* <-- Tamaño de texto */
+                /* --- MODIFICADO --- */
+                min-height: 260px;    /* <-- Aumentado de 190 */
+                min-width: 300px;     /* <-- Aumentado de 210 */
+                /* --- FIN MODIFICADO --- */
+
+                font: Segoe UI;
+                font-size: 18px;      
                 font-weight: bold;
-                padding: 15px;        /* Padding interno */
+                padding: 15px;      
                 border-radius: 8px;
                 
                 background-color: #3C3F41;
@@ -118,11 +138,25 @@ class RegisterHubWidget(QWidget):
                 color: black;
                 border: 1px solid #f7a51b;
             }
+            #LinkButton {
+                background-color: transparent;
+                border: none;
+                color: #AAAAAA; /* Color de texto normal (sutil) */
+                font-size: 16px;
+                font-weight: bold;
+                padding: 10px;
+                text-align: center;
+            }
+            #LinkButton:hover {
+                text-decoration: underline;
+                color: #f7a51b; /* Color de tu título al pasar el mouse */
+            }
         """)
 
         self.btn_item.clicked.connect(self._open_item_dialog)
         self.btn_brand.clicked.connect(self._open_brand_dialog)
         self.btn_category.clicked.connect(self._open_category_dialog)
+        self.btn_update_link.clicked.connect(self._open_update_view)
 
     def _open_item_dialog(self):
         dlg = QDialog(self)
@@ -150,3 +184,6 @@ class RegisterHubWidget(QWidget):
         lay.addWidget(form)
         dlg.resize(600, 500)
         dlg.exec()
+    
+    def _open_update_view(self):
+        print("Botón de 'Actualizar' presionado. Abriendo otra vista...")

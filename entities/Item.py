@@ -1,4 +1,3 @@
-# entities/item.py
 from db.connection import get_connection
 from ui.translations import ITEM_LABELS_ES, ITEM_PACK_TYPE_ES, BOOL_ES
 
