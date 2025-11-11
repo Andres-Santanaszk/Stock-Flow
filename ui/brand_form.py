@@ -1,4 +1,3 @@
-# ui/brand_form.py
 from PySide6.QtWidgets import (
     QWidget, QFormLayout, QLineEdit, QTextEdit, QPushButton,
     QHBoxLayout, QVBoxLayout, QMessageBox, QLabel, QFrame
@@ -11,29 +10,24 @@ class BrandFormWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        # --- Título Principal ---
         title_label = QLabel("Registrar Marca")
         title_label.setFont(QFont("Segoe UI", 20, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setObjectName("FormTitle")
 
-        # --- Layout para los campos (irá dentro de la tarjeta) ---
         form_layout = QFormLayout()
         form_layout.setLabelAlignment(Qt.AlignRight)
 
-        # --- Widgets (Campos del formulario) ---
         self.txtName = QLineEdit()
         self.txtDesc = QTextEdit(); self.txtDesc.setFixedHeight(70)
         self.txtWebsite = QLineEdit()
         self.txtEmail = QLineEdit()
         
-        # --- Asignar widgets al layout ---
         form_layout.addRow("Nombre:", self.txtName)
         form_layout.addRow("Descripción:", self.txtDesc)
         form_layout.addRow("Sitio web:", self.txtWebsite)
         form_layout.addRow("Email contacto:", self.txtEmail)
 
-        # --- Creación de la Tarjeta (QFrame) ---
         card_form = QFrame()
         card_form.setObjectName("CardFrame")
         card_layout = QVBoxLayout(card_form)

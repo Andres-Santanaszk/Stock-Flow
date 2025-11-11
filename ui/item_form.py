@@ -1,5 +1,3 @@
-# ui/item_form.py
-
 from PySide6.QtWidgets import (
     QWidget, QFormLayout, QLineEdit, QTextEdit, QComboBox, QSpinBox,
     QCheckBox, QPushButton, QMessageBox, QHBoxLayout, QVBoxLayout,

@@ -26,7 +26,7 @@ class LoginDialog(QDialog):
     def check_login(self):
         if self.user_input.text() == "admin" and self.pass_input.text() == "1234":
             self.valid_login = True
-            self.accept()  # cierra el dialogo con resultado aceptado
+            self.accept()  
         else:
             QMessageBox.warning(self, "Error", "Usuario o contraseña incorrectos")
 

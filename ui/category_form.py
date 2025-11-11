@@ -1,4 +1,3 @@
-# ui/category_form.py
 from PySide6.QtWidgets import (
     QWidget, QFormLayout, QLineEdit, QTextEdit, QPushButton,
     QHBoxLayout, QVBoxLayout, QMessageBox, QComboBox, QCheckBox,
@@ -6,7 +5,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from entities.Category import Category  # <-- Importamos la entidad
+from entities.Category import Category
 from ui.translations import ITEM_CLASS_ES 
 
 class CategoryFormWidget(QWidget):
@@ -19,11 +18,9 @@ class CategoryFormWidget(QWidget):
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setObjectName("FormTitle")
 
-        # --- Layout para los campos (irá dentro de la tarjeta) ---
         form_layout = QFormLayout()
         form_layout.setLabelAlignment(Qt.AlignRight)
 
-        # --- Widgets (Campos del formulario) ---
         self.txtName = QLineEdit()
         
         self.cmbClass = QComboBox()
@@ -32,12 +29,10 @@ class CategoryFormWidget(QWidget):
 
         self.txtDesc = QTextEdit(); self.txtDesc.setFixedHeight(70)
 
-        # --- Asignar widgets al layout ---
         form_layout.addRow("Nombre:", self.txtName)
         form_layout.addRow("Tipo:", self.cmbClass)
         form_layout.addRow("Descripción:", self.txtDesc)
 
-        # --- Creación de la Tarjeta (QFrame) ---
         card_form = QFrame()
         card_form.setObjectName("CardFrame")
         card_layout = QVBoxLayout(card_form)
@@ -49,7 +44,6 @@ class CategoryFormWidget(QWidget):
         card_layout.addLayout(form_layout)
         card_layout.addStretch()
 
-        # --- Botones de Acción ---
         self.btnSave = QPushButton("Guardar Categoría")
         self.btnSave.setObjectName("BtnSave")
         
@@ -69,17 +63,16 @@ class CategoryFormWidget(QWidget):
         
         root_layout.addWidget(title_label)
         root_layout.addWidget(card_form)
-        root_layout.addStretch(1) # Empuja botones al fondo
+        root_layout.addStretch(1)
         root_layout.addLayout(btns_layout)
 
-        # --- Cargar Estilos y Conexiones ---
         self._apply_styles()
         self.btnSave.clicked.connect(self._on_save)
         self.btnClear.clicked.connect(self._on_clear)
 
     def _apply_styles(self):
         """ Aplica los QSS para el estilo de tarjetas """
-        # Estilos copiados de item_form.py para consistencia
+
         self.setStyleSheet("""
             #FormTitle {
                 color: #f7a51b;
@@ -129,10 +122,10 @@ class CategoryFormWidget(QWidget):
             }
         """)
 
-    # --- Lógica (SIN CAMBIOS, ya usa la entidad) ---
+
     def _on_save(self):
         name = self.txtName.text().strip()
-        cls_ = self.cmbClass.currentData()  # 'class_' con guion bajo
+        cls_ = self.cmbClass.currentData()
         desc = self.txtDesc.toPlainText().strip() or None
 
         if not name or not cls_:

@@ -275,12 +275,7 @@ class MainWindow(QMainWindow):
         
 
 if __name__ == "__main__":
-    # La aplicación de PySide6
     app = QApplication(sys.argv)
-    
-    # 1. Aplicar el tema oscuro (Dark Theme)
-    # Se usa 'light' para el modo claro o 'dark' para el modo oscuro.
-    # qdarktheme.setup_theme(theme='dark', corner_radius=5) 
     
     qdarktheme.setup_theme()
     
@@ -293,10 +288,9 @@ if __name__ == "__main__":
     if login_dialog.exec() == QDialog.Accepted and login_dialog.valid_login:
         main_window = MainWindow()
         main_window.show()
-        app.main_window = main_window  # mantener referencia
+        app.main_window = main_window
         sys.exit(app.exec())
     else:
-        # Si el login se cancela o es incorrecto → cerrar app
         print("INFO: Inicio de sesión cancelado o inválido.")
         sys.exit(0)
 
