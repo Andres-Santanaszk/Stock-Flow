@@ -39,13 +39,11 @@ class PlaceholderWidget(QFrame):
         role_label.setFont(QFont("Segoe UI", 14))
         role_label.setAlignment(Qt.AlignCenter)
         role_label.setStyleSheet("QLabel { margin-top: 15px; }")
-
-        # Mensaje específico para las vistas de solo lectura (Módulo 4)
         
         layout.addWidget(title_label)
         layout.addWidget(role_label)
         
-        # Adaptación ligera del frame para que sea menos brillante en Dark Mode
+        
         self.setStyleSheet("""
             QFrame {
                 background-color: #3C3F41; /* Fondo ligeramente más oscuro que el fondo principal del tema */
@@ -61,20 +59,18 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Stock Flow")
         self.setGeometry(100, 100, 1200, 800)
         
-        # Simulamos un usuario logueado
         self.current_user_role = "Administrador" 
         
         self._setup_styles()
         self._setup_ui()
         self._apply_role_permissions()
         
-        # Conexión inicial para mostrar la vista por defecto
         self.btn_dashboard.click()
 
     def _setup_styles(self):
         """Estilos generales para la ventana principal y la barra lateral, ajustados para Dark Theme."""
         
-        # Los colores de la barra lateral se ajustan para tener mejor contraste en el tema oscuro.
+        
         self.setStyleSheet("""
             QMainWindow {
                 /* Fondo de QMainWindow será manejado por qdarktheme */
@@ -144,7 +140,7 @@ class MainWindow(QMainWindow):
 
         main_layout.addWidget(self.sidebar_frame)
 
-        # 2. Área Central (Central Area)
+        # Central Area
         self.stacked_widget = QStackedWidget()
         self.stacked_widget.setStyleSheet("QStackedWidget { padding: 5px; }")
         

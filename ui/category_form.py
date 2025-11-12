@@ -12,7 +12,6 @@ class CategoryFormWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        # --- Título Principal ---
         title_label = QLabel("Registrar Categoría")
         title_label.setFont(QFont("Segoe UI", 20, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
@@ -50,13 +49,11 @@ class CategoryFormWidget(QWidget):
         self.btnClear = QPushButton("Limpiar")
         self.btnClear.setObjectName("BtnClear")
 
-        # --- Layout de botones ---
         btns_layout = QHBoxLayout()
         btns_layout.addStretch(1)
         btns_layout.addWidget(self.btnClear, 1)
         btns_layout.addWidget(self.btnSave, 2)
 
-        # --- Layout Raíz (Vertical) ---
         root_layout = QVBoxLayout(self)
         root_layout.setContentsMargins(20, 20, 20, 20)
         root_layout.setSpacing(15)
