@@ -59,7 +59,7 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Stock Flow")
         self.setGeometry(100, 100, 1200, 800)
         
-        self.current_user_role = "Administrador" 
+        self.current_user_role = "Líder" 
         
         self._setup_styles()
         self._setup_ui()

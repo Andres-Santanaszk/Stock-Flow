@@ -39,37 +39,36 @@ class BrandFormWidget(QWidget):
         card_layout.addLayout(form_layout)
         card_layout.addStretch()
 
-        # --- Botones de Acción ---
+        # botnes
         self.btnSave = QPushButton("Guardar Marca")
         self.btnSave.setObjectName("BtnSave")
         
         self.btnClear = QPushButton("Limpiar")
         self.btnClear.setObjectName("BtnClear")
 
-        # --- Layout de botones ---
+        # layout botones
         btns_layout = QHBoxLayout()
         btns_layout.addStretch(1)
         btns_layout.addWidget(self.btnClear, 1)
         btns_layout.addWidget(self.btnSave, 2)
 
-        # --- Layout Raíz (Vertical) ---
+        # layout vertical
         root_layout = QVBoxLayout(self)
         root_layout.setContentsMargins(20, 20, 20, 20)
         root_layout.setSpacing(15)
         
         root_layout.addWidget(title_label)
         root_layout.addWidget(card_form)
-        root_layout.addStretch(1) # Empuja botones al fondo
+        root_layout.addStretch(1) 
         root_layout.addLayout(btns_layout)
 
-        # --- Cargar Estilos y Conexiones ---
+        # aplicando estilos y conectar boton
         self._apply_styles()
         self.btnSave.clicked.connect(self._on_save)
         self.btnClear.clicked.connect(self._on_clear)
 
     def _apply_styles(self):
         """ Aplica los QSS para el estilo de tarjetas """
-        # Estilos copiados de item_form.py para consistencia
         self.setStyleSheet("""
             #FormTitle {
                 color: #f7a51b;
@@ -119,7 +118,7 @@ class BrandFormWidget(QWidget):
             }
         """)
 
-    # --- Lógica (SIN CAMBIOS, ya usa la entidad) ---
+    # logica
     def _on_save(self):
         name = self.txtName.text().strip()
         desc = self.txtDesc.toPlainText().strip() or None
