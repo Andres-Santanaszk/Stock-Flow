@@ -1,17 +1,25 @@
 import sys
+from pathlib import Path
+import qdarktheme
+import qtawesome as qta
+
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout,
     QHBoxLayout, QPushButton, QLabel, QStackedWidget,
     QFrame, QDialog
 )
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QFont, QColor, QIcon
+from PySide6.QtCore import Qt, QSize, QPropertyAnimation
+from PySide6.QtGui import QFont, QIcon
 from PySide6.QtSvgWidgets import QSvgWidget
-from pathlib import Path
-import qdarktheme
+from PySide6.QtCore import Qt, QSize
+from PySide6.QtWidgets import QPushButton, QGraphicsOpacityEffect
+
 from ui.login_window import LoginDialog
-from ui.item_form import ItemFormWidget
-from ui.register_hub import RegisterHubWidget
+from ui.forms.register_hub import RegisterHubWidget
+from ui.forms.movement_form import MovementsWidget
+from ui.utils.common_widgets import AnimatedButton
+
+
 
 ROLES_PERMISSIONS = {
     "Administrador": ["Management", "Inventory", "Requests", "Visibility", "Dashboard", "management", "history", "administration", "register_item"],
@@ -59,13 +67,87 @@ class MainWindow(QMainWindow):
         self.setWindowTitle("Stock Flow")
         self.setGeometry(100, 100, 1200, 800)
         
-        self.current_user_role = "Líder" 
+        self.current_user_role = "Administrador" 
+        
+        self._fade_anim = None
         
         self._setup_styles()
         self._setup_ui()
         self._apply_role_permissions()
-        
+    
         self.btn_dashboard.click()
+
+    def _animate_transition_to_widget(self, new_widget):
+            """Hace una transición de fade entre la vista actual y new_widget."""
+            current_widget = self.stacked_widget.currentWidget()
+            if current_widget is new_widget:
+                return  # nada que hacer
+
+            # --- Efecto y animación de fade-out en la vista actual ---
+            if current_widget is not None:
+                from PySide6.QtWidgets import QGraphicsOpacityEffect
+                from PySide6.QtCore import QPropertyAnimation
+
+                effect = QGraphicsOpacityEffect(current_widget)
+                current_widget.setGraphicsEffect(effect)
+
+                fade_out = QPropertyAnimation(effect, b"opacity", self)
+                fade_out.setDuration(250)
+                fade_out.setStartValue(1.0)
+                fade_out.setEndValue(0.0)
+
+                def on_fade_out_finished():
+                    current_widget.setGraphicsEffect(None)
+
+                    index = self.stacked_widget.indexOf(new_widget)
+                    self.stacked_widget.setCurrentIndex(index)
+
+                    effect_new = QGraphicsOpacityEffect(new_widget)
+                    new_widget.setGraphicsEffect(effect_new)
+                    effect_new.setOpacity(0.0)
+
+                    fade_in = QPropertyAnimation(effect_new, b"opacity", self)
+                    fade_in.setDuration(250)
+                    fade_in.setStartValue(0.0)
+                    fade_in.setEndValue(1.0)
+
+                    def on_fade_in_finished():
+                        new_widget.setGraphicsEffect(None)
+
+                    fade_in.finished.connect(on_fade_in_finished)
+                    fade_in.start()
+
+                    self._fade_anim = fade_in
+
+                fade_out.finished.connect(on_fade_out_finished)
+                fade_out.start()
+
+                self._fade_anim = fade_out
+
+            else:
+                # Primera vez: solo fade-in
+                from PySide6.QtWidgets import QGraphicsOpacityEffect
+                from PySide6.QtCore import QPropertyAnimation
+
+                index = self.stacked_widget.indexOf(new_widget)
+                self.stacked_widget.setCurrentIndex(index)
+
+                effect_new = QGraphicsOpacityEffect(new_widget)
+                new_widget.setGraphicsEffect(effect_new)
+                effect_new.setOpacity(0.0)
+
+                fade_in = QPropertyAnimation(effect_new, b"opacity", self)
+                fade_in.setDuration(250)
+                fade_in.setStartValue(0.0)
+                fade_in.setEndValue(1.0)
+
+                def on_fade_in_finished():
+                    new_widget.setGraphicsEffect(None)
+
+                fade_in.finished.connect(on_fade_in_finished)
+                fade_in.start()
+                self._fade_anim = fade_in
+
 
     def _setup_styles(self):
         """Estilos generales para la ventana principal y la barra lateral, ajustados para Dark Theme."""
@@ -73,7 +155,6 @@ class MainWindow(QMainWindow):
         
         self.setStyleSheet("""
             QMainWindow {
-                /* Fondo de QMainWindow será manejado por qdarktheme */
             }
             QPushButton {
                 /* Colores generales de botones manejados por qdarktheme, solo ajustamos padding y fuente */
@@ -86,18 +167,18 @@ class MainWindow(QMainWindow):
                 color: white;
             }
             QPushButton:hover {
-                background-color: #f7c774; /* Color de acento para botón seleccionado */
+                background-color: #f7c774; 
                 color: black;
                 font-weight: bold;
             }
             QPushButton:checked {
-                background-color: #f7a51b; /* Color de acento para botón seleccionado */
+                background-color: #f7a51b; 
                 color: white;
                 font-weight: bold;
                 font-size: 16px;
             }
             #SidebarFrame {
-                background-color: #2D2D30; /* Fondo oscuro específico para la barra lateral */
+                background-color: #2D2D30; 
                 border-right: 1px solid #555555;
             }
             #HeaderLabel {
@@ -118,7 +199,7 @@ class MainWindow(QMainWindow):
         main_layout.setSpacing(0)
         self.setCentralWidget(central_widget)
 
-        # 1. Barra Lateral (Sidebar)
+        # sidebar
         self.sidebar_frame = QFrame()
         self.sidebar_frame.setObjectName("SidebarFrame")
         self.sidebar_frame.setFixedWidth(250)
@@ -135,12 +216,12 @@ class MainWindow(QMainWindow):
         self.sidebar_layout.addLayout(self.buttons_layout)
         self.sidebar_layout.addStretch()
         
-        # Etiqueta de usuario y botón de Logout
+        
         self._setup_user_info()
 
         main_layout.addWidget(self.sidebar_frame)
 
-        # Central Area
+        # central area
         self.stacked_widget = QStackedWidget()
         self.stacked_widget.setStyleSheet("QStackedWidget { padding: 5px; }")
         
@@ -153,31 +234,38 @@ class MainWindow(QMainWindow):
         self.buttons_layout = QVBoxLayout()
         self.buttons_layout.setSpacing(2)
         
-        # Mapeo de botones a sus títulos y IDs de permiso
-        self.button_map = {
-            "Dashboard": ("🏠 Inicio", "Dashboard"),
-            "Registrar_Item": ("📝 Registros", "register_item"),
-            # Módulo 2: Operaciones de Inventario
-            "Movimientos de inventario": ("📦 Movimientos", "Inventory"),
-            # Módulo 4: Visualización de Inventario
-            "Inventory On Hand": ("📊 Inventario", "Visibility"),
-            "Localización": ("📌 Ubicaciones", "Visibility"),
-            # Módulo 1: Gestión de Usuarios y Roles
-            "Gestión de Roles": ("👥 Administrar usuarios", "management"),
-            "Historial de Movimientos": ("📜 Historial transacciones", "history"),
-            "Administrar inventario": ("🛠️ Catálogos", "administration")
-        }
         
+        self.button_map = {
+            "Dashboard": ("Inicio", "Dashboard", "mdi.home"),
+            "Registrar_Item": ("Registros", "register_item", "mdi.file-edit"),
+            
+            
+            "Movimientos de inventario": ("Movimientos", "Inventory", "mdi.swap-horizontal"),
+            
+            
+            "Inventory On Hand": ("Inventario", "Visibility", "mdi.cube-scan"),
+            "Localización": ("Ubicaciones", "Visibility", "mdi.map-marker"),
+            
+            "Gestión de Roles": ("Administrar usuarios", "management", "mdi.account-cog"),
+            
+            "Historial de Movimientos": ("Historial transacciones", "history", "mdi.history"),
+            
+            "Administrar inventario": ("Catálogos", "administration", "mdi.tag-outline")
+        }
+
         self.buttons = {}
-        for key, (text, permission_id) in self.button_map.items():
-            btn = QPushButton(text)
+        for key, (text, permission_id, icon_name) in self.button_map.items():
+            btn = AnimatedButton(text, self,
+                                base_icon_size=QSize(24, 24),
+                                hover_icon_size=QSize(32, 32))
+            btn.setIcon(qta.icon(icon_name, color="white"))
+            btn.setCursor(Qt.PointingHandCursor)
             btn.setCheckable(True)
             btn.clicked.connect(lambda checked, k=key: self._switch_view(k, checked))
-            btn.setProperty("permission_id", permission_id) # Usado para restricción de roles
+            btn.setProperty("permission_id", permission_id) 
             self.buttons[key] = btn
             self.buttons_layout.addWidget(btn)
-        
-        # Botón Dashboard/Inicio (Siempre debe estar visible y es el primero)
+            
         self.btn_dashboard = self.buttons["Dashboard"]
     
     def _setup_user_info(self):
@@ -199,7 +287,6 @@ class MainWindow(QMainWindow):
         role_label.setFont(QFont("Segoe UI", 10))
         user_info_layout.addWidget(role_label)
         
-        #Logout
         btn_logout = QPushButton("Cerrar Sesión / Logout")
         btn_logout.clicked.connect(self._handle_logout)
         btn_logout.setStyleSheet("QPushButton { background-color: #D32F2F; color: white; } QPushButton:hover { background-color: #EF5350; }")
@@ -210,9 +297,11 @@ class MainWindow(QMainWindow):
     def _setup_central_views(self):
         """Crea y añade los widgets al QStackedWidget."""
         self.view_widgets = {}
-        for key, (title, _) in self.button_map.items():
+        for key, (title, permission_id, icon_name) in self.button_map.items():
             if key == "Registrar_Item":  
-                widget = RegisterHubWidget(self) 
+                widget = RegisterHubWidget(self)
+            elif key == "Movimientos de inventario": 
+                widget = MovementsWidget(self)
             else:
                 widget = PlaceholderWidget(title, self.current_user_role)
             self.view_widgets[key] = widget
@@ -220,21 +309,21 @@ class MainWindow(QMainWindow):
 
 
     def _switch_view(self, key, checked):
-        """Maneja el cambio de vista en el QStackedWidget."""
-        if not checked:
-            return
+            """Maneja el cambio de vista en el QStackedWidget."""
+            if not checked:
+                return
 
-        # Desactivar todos los demás botones
-        for other_key, btn in self.buttons.items():
-            if other_key != key:
-                btn.setChecked(False)
-        
-        # Cambiar el widget en el stack
-        widget = self.view_widgets.get(key)
-        if widget:
-            index = self.stacked_widget.indexOf(widget)
-            self.stacked_widget.setCurrentIndex(index)
-            print(f"DEBUG: Cambiando a la vista: {key}")
+            # desactivar todos los demás botones
+            for other_key, btn in self.buttons.items():
+                if other_key != key:
+                    btn.setChecked(False)
+            
+            # cambiar el widget en el stack con animación
+            widget = self.view_widgets.get(key)
+            if widget:
+                print(f"DEBUG: Cambiando a la vista: {key}")
+                self._animate_transition_to_widget(widget)        
+
 
     def _apply_role_permissions(self):
         """Habilita/deshabilita botones según el rol del usuario."""
@@ -243,25 +332,20 @@ class MainWindow(QMainWindow):
         for key, btn in self.buttons.items():
             permission_id = btn.property("permission_id")
             
-            # El Dashboard siempre está visible si tiene el permiso "Dashboard"
+            # el dashboard siempre está visible si tiene el permiso "Dashboard"
             if permission_id == "Dashboard" and permission_id in required_permissions:
-                btn.setEnabled(True)
+                btn.show()
                 continue
 
             if permission_id in required_permissions:
-                btn.setEnabled(True)
+                btn.show()
             else:
-                btn.setEnabled(False)
-                # Estilo de botón deshabilitado que se ve bien en Dark Mode
-                disabled_style = "QPushButton { color: #888888; background-color: #38383a; }"
-                btn.setStyleSheet(btn.styleSheet() + disabled_style)
-                btn.setText(f"{self.button_map[key][0]} (Acceso Denegado)")
+                btn.hide()
                 print(f"INFO: Botón '{key}' deshabilitado para rol '{self.current_user_role}'.")
 
     def _handle_logout(self):
         """Simulación de la acción de cerrar sesión."""
         print("INFO: Usuario cerró sesión (Logout).")
-        # En una aplicación real, aquí se cerraría la ventana de la App y se abriría la de Login.
         self.close()
         login_dialog = LoginDialog()
         if login_dialog.exec() == QDialog.Accepted and login_dialog.valid_login:

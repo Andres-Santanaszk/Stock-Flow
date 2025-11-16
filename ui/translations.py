@@ -13,14 +13,12 @@ ITEM_LABELS_ES = {
     "updated_at": "Actualizado",
 }
 
-# Tipos de movimiento
 MOV_TYPE_ES = {
     "IN": "Entrada",
     "OUT": "Salida",
     "ADJUST": "Ajuste",
 }
 
-# Razones de movimiento
 MOV_REASON_ES = {
     "sale": "Venta",
     "purchase": "Compra",
@@ -36,7 +34,6 @@ MOV_REASON_ES = {
     "relocation": "Reubicación",
 }
 
-# Tipos de ubicacion
 LOCATION_TYPE_ES = {
     "Rack": "Rack",
     "Shelf": "Anaquel",
@@ -46,7 +43,6 @@ LOCATION_TYPE_ES = {
     "Cart": "Carrito",
 }
 
-# Clases de item
 ITEM_CLASS_ES = {
     "finished_product": "Producto terminado",
     "raw_material": "Materia prima",
@@ -54,7 +50,6 @@ ITEM_CLASS_ES = {
     "consumable": "Consumible",
 }
 
-# Tipo de empaque
 ITEM_PACK_TYPE_ES = {
     "unit": "Unidad",
     "package": "Paquete",
@@ -65,7 +60,6 @@ ITEM_PACK_TYPE_ES = {
     "set": "Conjunto",
 }
 
-# Booleanos
 BOOL_ES = {
     True: "Sí",
     False: "No",
