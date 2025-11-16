@@ -9,9 +9,11 @@ from pathlib import Path
 from ui.forms.item_form import ItemFormWidget
 from ui.forms.brand_form import BrandFormWidget
 from ui.forms.category_form import CategoryFormWidget
-from ui.utils.common_widgets import IconHoverAnimationMixin  
+from ui.forms.location_form import LocationFormWidget
+from ui.utils.common_widgets import IconHoverAnimationMixin
 
 BASE_DIR = Path(__file__).resolve().parents[1]
+
 
 class AnimatedHubButton(IconHoverAnimationMixin, QToolButton):
     def __init__(
@@ -78,11 +80,18 @@ class RegisterHubWidget(QWidget):
             "folder-new",
         )
 
+        self.btn_location = AnimatedHubButton(
+            "Registrar Locacion",
+            BASE_DIR / "utils" / "brands.svg",
+            "folder-new",
+        )
+
         button_layout = QHBoxLayout()
         button_layout.setSpacing(40)
         button_layout.addWidget(self.btn_item)
         button_layout.addWidget(self.btn_brand)
         button_layout.addWidget(self.btn_category)
+        button_layout.addWidget(self.btn_location)
 
         main_layout = QVBoxLayout(self)
         main_layout.setAlignment(Qt.AlignCenter)
@@ -140,6 +149,7 @@ class RegisterHubWidget(QWidget):
         self.btn_brand.clicked.connect(self._open_brand_dialog)
         self.btn_category.clicked.connect(self._open_category_dialog)
         self.btn_update_link.clicked.connect(self._open_update_view)
+        self.btn_location.clicked.connect(self._open_location_dialog)
 
     def _open_item_dialog(self):
         dlg = QDialog(self)
@@ -163,6 +173,15 @@ class RegisterHubWidget(QWidget):
         dlg = QDialog(self)
         dlg.setWindowTitle("Registrar categoría")
         form = CategoryFormWidget(dlg)
+        lay = QVBoxLayout(dlg)
+        lay.addWidget(form)
+        dlg.resize(600, 500)
+        dlg.exec()
+
+    def _open_location_dialog(self):
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Registrar locacion")
+        form = LocationFormWidget(dlg)
         lay = QVBoxLayout(dlg)
         lay.addWidget(form)
         dlg.resize(600, 500)
