@@ -59,7 +59,6 @@ class ItemFormWidget(QWidget):
         card_info_layout.addLayout(info_layout)
         card_info_layout.addStretch()
 
-
         card_stock = QFrame()
         card_stock.setObjectName("CardFrame")
         card_stock_layout = QVBoxLayout(card_stock)
