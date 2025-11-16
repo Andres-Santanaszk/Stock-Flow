@@ -6,13 +6,12 @@ import qtawesome as qta
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout,
     QHBoxLayout, QPushButton, QLabel, QStackedWidget,
-    QFrame, QDialog
+    QFrame, QDialog, QPushButton
 )
-from PySide6.QtCore import Qt, QSize, QPropertyAnimation
+from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QFont, QIcon
 from PySide6.QtSvgWidgets import QSvgWidget
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtWidgets import QPushButton, QGraphicsOpacityEffect
+
 
 from ui.login_window import LoginDialog
 from ui.forms.register_hub import RegisterHubWidget
@@ -83,16 +82,16 @@ class MainWindow(QMainWindow):
             if current_widget is new_widget:
                 return  # nada que hacer
 
-            # --- Efecto y animación de fade-out en la vista actual ---
+            
             if current_widget is not None:
-                from PySide6.QtWidgets import QGraphicsOpacityEffect
+                from PySide6.QtWidgets import QGraphicsOpacityEffect #si no los importo aqui no funciona wtf
                 from PySide6.QtCore import QPropertyAnimation
-
+                
                 effect = QGraphicsOpacityEffect(current_widget)
                 current_widget.setGraphicsEffect(effect)
 
                 fade_out = QPropertyAnimation(effect, b"opacity", self)
-                fade_out.setDuration(250)
+                fade_out.setDuration(150)
                 fade_out.setStartValue(1.0)
                 fade_out.setEndValue(0.0)
 
@@ -107,7 +106,7 @@ class MainWindow(QMainWindow):
                     effect_new.setOpacity(0.0)
 
                     fade_in = QPropertyAnimation(effect_new, b"opacity", self)
-                    fade_in.setDuration(250)
+                    fade_in.setDuration(150)
                     fade_in.setStartValue(0.0)
                     fade_in.setEndValue(1.0)
 
@@ -125,7 +124,6 @@ class MainWindow(QMainWindow):
                 self._fade_anim = fade_out
 
             else:
-                # Primera vez: solo fade-in
                 from PySide6.QtWidgets import QGraphicsOpacityEffect
                 from PySide6.QtCore import QPropertyAnimation
 
@@ -150,9 +148,6 @@ class MainWindow(QMainWindow):
 
 
     def _setup_styles(self):
-        """Estilos generales para la ventana principal y la barra lateral, ajustados para Dark Theme."""
-        
-        
         self.setStyleSheet("""
             QMainWindow {
             }
@@ -210,7 +205,9 @@ class MainWindow(QMainWindow):
         logo_widget = QSvgWidget(str(logo_path))
         logo_widget.setObjectName("HeaderLabel")
         logo_widget.setMaximumHeight(180)
+        logo_widget.setMaximumWidth(180)
         self.sidebar_layout.addWidget(logo_widget)
+        self.sidebar_layout.addWidget(logo_widget, alignment=Qt.AlignCenter)
 
         self._setup_sidebar_buttons()
         self.sidebar_layout.addLayout(self.buttons_layout)

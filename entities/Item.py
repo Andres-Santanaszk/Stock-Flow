@@ -38,7 +38,7 @@ class Item:
         INSERT INTO items
             (name, sku, barcode, brand_id, description, category_id, pack_type, min_qty, active)
         VALUES
-            (%s,   %s,  %s,      %s,       %s,          %s,          %s,        %s,      %s)
+            (%s,%s,%s,%s,%s,%s,%s,%s,%s)
         RETURNING id_item, created_at, updated_at;
         """
         conn = get_connection()

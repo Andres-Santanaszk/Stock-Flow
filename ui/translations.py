@@ -24,7 +24,7 @@ MOV_REASON_ES = {
     "purchase": "Compra",
     "return_in": "Devolución entrada",
     "return_out": "Devolución salida",
-    "scrap": "Desecho",
+    "scrap": "Scrap",
     "damage": "Daño",
     "shipping": "Envío",
     "transfer_in": "Transferencia entrada",
