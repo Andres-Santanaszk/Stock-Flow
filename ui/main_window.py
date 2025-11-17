@@ -14,7 +14,7 @@ from PySide6.QtSvgWidgets import QSvgWidget
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtWidgets import QPushButton, QGraphicsOpacityEffect
 
-from ui.login_window import LoginDialog
+from ui.login_window import LoginWindow
 from ui.forms.register_hub import RegisterHubWidget
 from ui.forms.movement_form import MovementsWidget
 from ui.utils.common_widgets import AnimatedButton
@@ -210,7 +210,9 @@ class MainWindow(QMainWindow):
         logo_widget = QSvgWidget(str(logo_path))
         logo_widget.setObjectName("HeaderLabel")
         logo_widget.setMaximumHeight(180)
+        logo_widget.setMaximumWidth(180)
         self.sidebar_layout.addWidget(logo_widget)
+        self.sidebar_layout.addWidget(logo_widget, alignment=Qt.AlignCenter)
 
         self._setup_sidebar_buttons()
         self.sidebar_layout.addLayout(self.buttons_layout)
@@ -273,15 +275,15 @@ class MainWindow(QMainWindow):
         user_info_frame = QFrame()
         user_info_frame.setStyleSheet("""
             QFrame {
-                border-top: 1px solid #555555; 
-                padding-top: 10px;
+                border-top: 0px solid #555555; 
+                padding-top: 0px;
             }
             QLabel {
                 color: #ECEFF1; 
             }
         """)
         user_info_layout = QVBoxLayout(user_info_frame)
-        user_info_layout.setContentsMargins(0, 0, 0, 0)
+        user_info_layout.setContentsMargins(0, 10, 0, 0)
         
         role_label = QLabel(f"Rol: <b>{self.current_user_role}</b>")
         role_label.setFont(QFont("Segoe UI", 10))
@@ -347,8 +349,8 @@ class MainWindow(QMainWindow):
         """Simulación de la acción de cerrar sesión."""
         print("INFO: Usuario cerró sesión (Logout).")
         self.close()
-        login_dialog = LoginDialog()
-        if login_dialog.exec() == QDialog.Accepted and login_dialog.valid_login:
+        login_window = LoginWindow()
+        if login_window.exec() == QDialog.Accepted and login_window.valid_login:
             main_window = MainWindow()
             main_window.show()
             app.main_window = main_window
@@ -364,8 +366,8 @@ if __name__ == "__main__":
     app.setWindowIcon(app_icon)
     app.setFont(QFont("Segoe UI"))
     
-    login_dialog = LoginDialog()
-    if login_dialog.exec() == QDialog.Accepted and login_dialog.valid_login:
+    login_window = LoginWindow()
+    if login_window.exec() == QDialog.Accepted and login_window.valid_login:
         main_window = MainWindow()
         main_window.show()
         app.main_window = main_window
