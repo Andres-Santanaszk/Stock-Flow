@@ -1,43 +1,65 @@
+from db.connection import get_connection
+
 class Movement:
-    def __init__(self, 
-                id_movement=None, 
-                id_item=None, 
-                id_user=None, 
-                type=None,
-                reason=None, 
-                qty=None, 
-                from_location_id=None, 
-                to_location_id=None, 
-                created_at=None
-                ):
-        self.id_movement = id_movement
+    def __init__(
+        self, 
+        id_item, 
+        id_user, 
+        mov_type, 
+        reason, 
+        qty, 
+        from_location_id=None, 
+        to_location_id=None,
+        id_mov=None,
+        created_at=None
+    ):
+        self.id_mov = id_mov
         self.id_item = id_item
         self.id_user = id_user
-        self.type = type
+        self.mov_type = mov_type
         self.reason = reason
         self.qty = qty
         self.from_location_id = from_location_id
         self.to_location_id = to_location_id
         self.created_at = created_at
     
-    def in_(self):
+    def save(self):
+        sql = """
+        INSERT INTO movements
+            (id_item, id_user, type, reason, qty, from_location_id, to_location_id)
+        VALUES
+            (%s,%s,%s,%s,%s,%s,%s)
+        RETURNING id_mov, created_at;
         """
-        Registra un movimiento de tipo entrada (IN), como compras, devoluciones o producción terminada
-        """
-        pass
+        
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (
+                self.id_item,
+                self.id_user,
+                self.mov_type,
+                self.reason,
+                self.qty,
+                self.from_location_id,
+                self.to_location_id
+            ))
 
-    def out(self):
-        """
-        Registra un movimiento de tipo salida (OUT), como ventas, envíos o consumo de materiales
-        """
-        pass
+            row = cur.fetchone()
+            conn.commit()
 
-    def adjust(self):
-        """
-        Registra un movimiento de ajuste (ADJUST), ya sea por correcciones, daños o ajustes de inventario físico.
-        """
-        pass
+            self.id_mov = row[0]
+            self.created_at = row[1]
 
+            return self.id_mov
+            
+        except Exception as e:
+            conn.rollback()
+            raise e 
+        finally:
+            cur.close()
+            conn.close()
+    
     def last_movements(self):
         """
         Obtiene los últimos movimientos registrados en el sistema.
