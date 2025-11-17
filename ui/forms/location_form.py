@@ -38,7 +38,6 @@ class LocationFormWidget(QWidget):
         form_layout.addRow("Código:", self.txtCode)
         form_layout.addRow("Tipo:", self.cmbType)
         form_layout.addRow("Descripción:", self.txtDescription)
-        form_layout.addRow("Stock Mínimo:", self.spnMinQty)
 
         card_form = QFrame()
         card_form.setObjectName("CardFrame")
