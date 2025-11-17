@@ -71,19 +71,11 @@ CREATE TABLE IF NOT EXISTS movements (
   ),
 
   CONSTRAINT chk_mov_locations_by_type CHECK (
-    (type = 'IN'
-      AND to_location_id   IS NOT NULL
-      AND from_location_id IS NULL)
+    (type = 'IN' AND to_location_id IS NOT NULL AND from_location_id IS NULL)
     OR
-    (type = 'OUT'
-      AND from_location_id IS NOT NULL
-      AND to_location_id   IS NULL)
+    (type = 'OUT' AND from_location_id IS NOT NULL AND to_location_id IS NULL)
     OR
-    (type = 'ADJUST' AND (
-        (from_location_id IS NOT NULL AND to_location_id IS NULL)
-      OR
-        (to_location_id   IS NOT NULL AND from_location_id IS NULL)
-    ))
+    (type = 'ADJUST' AND (from_location_id IS NOT NULL OR to_location_id IS NOT NULL))
   ),
 
   CONSTRAINT chk_from_to_diff CHECK (
@@ -111,13 +103,20 @@ BEGIN
   ELSIF NEW.type = 'OUT' THEN
     NEW.qty := -NEW.qty;
   ELSIF NEW.type = 'ADJUST' THEN
-    IF NEW.from_location_id IS NOT NULL THEN
-      NEW.qty := -NEW.qty;
+
+    IF NEW.from_location_id IS NOT NULL AND NEW.to_location_id IS NOT NULL THEN
+       NEW.qty := NEW.qty;
+       
+    ELSIF NEW.from_location_id IS NOT NULL THEN
+       NEW.qty := -NEW.qty;
+       
     ELSIF NEW.to_location_id IS NOT NULL THEN
-      NEW.qty := NEW.qty;
+       NEW.qty := NEW.qty;
+       
     ELSE
-      RAISE EXCEPTION 'Ajuste requiere from_location_id o to_location_id';
+       RAISE EXCEPTION 'Ajuste requiere from_location_id o to_location_id';
     END IF;
+
   ELSE
     RAISE EXCEPTION 'Tipo de movimiento desconocido: %', NEW.type;
   END IF;
@@ -136,42 +135,45 @@ EXECUTE FUNCTION enforce_qty_sign();
 
 CREATE OR REPLACE FUNCTION apply_movement_ins() RETURNS TRIGGER AS $$
 DECLARE
-  tgt_location INT;
-  delta        INT;
-  new_qty      INT;
+  qty_abs INT;
+  current_qty INT;
 BEGIN
-  IF NEW.type = 'IN' THEN
-    tgt_location := NEW.to_location_id;
-  ELSIF NEW.type = 'OUT' THEN
-    tgt_location := NEW.from_location_id;
-  ELSE
-    IF NEW.from_location_id IS NOT NULL THEN
-      tgt_location := NEW.from_location_id;
-    ELSE
-      tgt_location := NEW.to_location_id;
+  qty_abs := ABS(NEW.qty);
+
+  -- 1. GESTIÓN DE ORIGEN (Salida) - Se mantiene estricto
+  IF NEW.from_location_id IS NOT NULL THEN
+    UPDATE item_locations 
+       SET qty = qty - qty_abs 
+     WHERE id_item = NEW.id_item 
+       AND id_location = NEW.from_location_id;
+
+    IF NOT FOUND THEN 
+       RAISE EXCEPTION 'El item % no existe en la ubicación de origen %', NEW.id_item, NEW.from_location_id; 
+    END IF;
+    
+    SELECT qty INTO current_qty FROM item_locations 
+     WHERE id_item = NEW.id_item AND id_location = NEW.from_location_id;
+     
+    IF current_qty < 0 THEN 
+       RAISE EXCEPTION 'Stock insuficiente en origen %. (Quedaría en %)', NEW.from_location_id, current_qty; 
     END IF;
   END IF;
 
-  delta := NEW.qty;
+  -- 2. GESTIÓN DE DESTINO (Entrada) - Modo "Auto-asignación"
+  IF NEW.to_location_id IS NOT NULL THEN
+    
+    -- Intentamos actualizar primero
+    UPDATE item_locations 
+       SET qty = qty + qty_abs 
+     WHERE id_item = NEW.id_item 
+       AND id_location = NEW.to_location_id;
 
-  UPDATE item_locations
-     SET qty = qty + delta
-   WHERE id_item = NEW.id_item
-     AND id_location = tgt_location
-  RETURNING qty INTO new_qty;
-
-  IF NOT FOUND THEN
-    IF delta < 0 THEN
-      RAISE EXCEPTION 'No hay stock en location % para item %', tgt_location, NEW.id_item;
-    ELSE
+    -- SI NO EXISTE, LO CREAMOS AUTOMÁTICAMENTE (Upsert manual)
+    IF NOT FOUND THEN
       INSERT INTO item_locations (id_item, id_location, qty)
-      VALUES (NEW.id_item, tgt_location, delta)
-      RETURNING qty INTO new_qty;
+      VALUES (NEW.id_item, NEW.to_location_id, qty_abs);
     END IF;
-  END IF;
-
-  IF new_qty < 0 THEN
-    RAISE EXCEPTION 'Stock negativo en location % para item %', tgt_location, NEW.id_item;
+    
   END IF;
 
   RETURN NULL;
@@ -190,3 +192,21 @@ SELECT
   m.*,
   m.qty AS qty_signed
 FROM movements m;
+
+CREATE OR REPLACE VIEW v_stock_available AS
+SELECT 
+    il.id_item,
+    i.sku,
+    i.name AS item_name,
+    i.pack_type,
+    
+    il.id_location,
+    l.code AS location_code,
+    l.type AS location_type,
+    
+    il.qty
+FROM item_locations il
+JOIN items i ON il.id_item = i.id_item
+JOIN locations l ON il.id_location = l.id_location
+WHERE il.qty > 0 
+ORDER BY i.name ASC, il.qty DESC;

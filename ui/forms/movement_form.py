@@ -1,14 +1,16 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QMessageBox, QLabel,  QComboBox, QSpinBox, QLineEdit, QPushButton, 
-    QFrame, QGridLayout, QTextEdit
+    QFrame, QGridLayout, QTextEdit, QCompleter
 )
 from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QFont, QIcon
+from PySide6.QtGui import QFont
 import qtawesome as qta
 from ui.utils.common_widgets import AnimatedButton
-from ui.translations import MOV_TYPE_ES, MOV_REASON_ES, LOCATION_TYPE_ES
+from ui.translations import MOV_TYPE_ES, MOV_REASON_ES, LOCATION_TYPE_ES, ITEM_PACK_TYPE_ES, BOOL_ES
 from entities.Location import Location
 from entities.Movement import Movement
+from entities.Item import Item
+from entities.ItemLocation import ItemLocation
 
 class MovementsWidget(QWidget):
     def __init__(self, parent=None):
@@ -17,6 +19,7 @@ class MovementsWidget(QWidget):
         self.setup_styles()
         
         self.load_locations()
+        self.load_items_for_search()
         self.set_movement_type("IN")
 
     def setup_ui(self):
@@ -57,17 +60,32 @@ class MovementsWidget(QWidget):
         grid = QGridLayout()
         grid.setVerticalSpacing(15)
         grid.setHorizontalSpacing(20)
-
+        
         # Row 1: SKU/Item Selection
         lbl_item = QLabel("Item / SKU:")
-        self.input_item = QLineEdit()
-        self.input_item.setPlaceholderText("Escanear código o buscar nombre...")
-        self.btn_search_item = QPushButton(qta.icon("mdi.magnify", color="white"), "")
-        self.btn_search_item.setFixedWidth(40)
+        
+        self.combo_item = QComboBox()
+        self.combo_item.setEditable(True)
+        self.combo_item.setInsertPolicy(QComboBox.NoInsert)
+        self.combo_item.setPlaceholderText("Buscar por nombre...")
+        self.combo_item.setFixedHeight(35)
+        
+        # Conectar señal de cambio para actualizar panel derecho
+        self.combo_item.currentIndexChanged.connect(self._update_info_panel)
+        
+        # Configurar autocompletado
+        completer = self.combo_item.completer()
+        completer.setFilterMode(Qt.MatchContains)
+        completer.setCompletionMode(QCompleter.PopupCompletion)
+        
+        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        completer.activated.connect(self._on_completer_activated)
+        
+        grid.addWidget(lbl_item, 0, 0)
+        grid.addWidget(self.combo_item, 0, 1)
+        
         
         item_layout = QHBoxLayout()
-        item_layout.addWidget(self.input_item)
-        item_layout.addWidget(self.btn_search_item)
         item_layout.setContentsMargins(0,0,0,0)
 
         grid.addWidget(lbl_item, 0, 0)
@@ -76,7 +94,7 @@ class MovementsWidget(QWidget):
         # Row 2: Quantity
         lbl_qty = QLabel("Cantidad:")
         self.spin_qty = QSpinBox()
-        self.spin_qty.setRange(1, 999999)
+        self.spin_qty.setRange(1, 500)
         self.spin_qty.setFixedHeight(35)
         grid.addWidget(lbl_qty, 1, 0)
         grid.addWidget(self.spin_qty, 1, 1)
@@ -103,20 +121,10 @@ class MovementsWidget(QWidget):
 
         form_layout.addLayout(grid)
 
-        # Notes Area
-        lbl_notes = QLabel("Comentarios:")
-        lbl_notes.setStyleSheet("margin-top: 10px;")
-        self.text_notes = QTextEdit()
-        self.text_notes.setMaximumHeight(80)
-        self.text_notes.setPlaceholderText("Detalles adicionales del movimiento...")
-        
-        form_layout.addWidget(lbl_notes)
-        form_layout.addWidget(self.text_notes)
-
         form_layout.addStretch()
 
         # Submit Button
-        self.btn_submit = QPushButton("REGISTRAR MOVIMIENTO")
+        self.btn_submit = QPushButton("Registrar Movimiento")
         self.btn_submit.setObjectName("SubmitButton")
         self.btn_submit.setCursor(Qt.PointingHandCursor)
         self.btn_submit.setIcon(qta.icon("mdi.content-save", color="white"))
@@ -130,7 +138,7 @@ class MovementsWidget(QWidget):
         self.info_frame.setFixedWidth(300)
         info_layout = QVBoxLayout(self.info_frame)
         
-        info_title = QLabel("Detalles del Item")
+        info_title = QLabel("Detalles del Ítem")
         info_title.setFont(QFont("Segoe UI", 14, QFont.Bold))
         info_layout.addWidget(info_title)
         
@@ -154,6 +162,10 @@ class MovementsWidget(QWidget):
         self.btn_in.clicked.connect(lambda: self.set_movement_type("IN"))
         self.btn_out.clicked.connect(lambda: self.set_movement_type("OUT"))
         self.btn_adjust.clicked.connect(lambda: self.set_movement_type("ADJUST"))
+        
+        self.btn_submit.clicked.connect(self._on_save)
+        
+        
 
     def create_type_button(self, text, icon_name, accent_color, hover_color):
         btn = AnimatedButton(
@@ -260,8 +272,8 @@ class MovementsWidget(QWidget):
         self.combo_origin.clear()
         self.combo_dest.clear()
         
-        self.combo_origin.addItem("Seleccionar ", userData=None)
-        self.combo_dest.addItem("Seleccionar ", userData=None)
+        self.combo_origin.addItem("", userData=None)
+        self.combo_dest.addItem("", userData=None)
           
         for loc_id, code, loc_type in locations:
             type_translated = LOCATION_TYPE_ES.get(loc_type, loc_type)
@@ -271,26 +283,145 @@ class MovementsWidget(QWidget):
             
     from PySide6.QtWidgets import QMessageBox
 
+    def load_items_for_search(self):
+        """Carga todos los items activos en el combobox para buscar"""
+        items = Item.search_items_for_display("", limit=1000)
+        
+        self.combo_item.blockSignals(True)
+        self.combo_item.clear()
+        self.combo_item.addItem("", userData=None)
+        
+        for row in items:
+            # row = (id_item, item_name, sku, active, brand_name, category_name)
+            id_item = row[0]
+            name = row[1]
+            sku = row[2]
+            
+            display_text = f"{name} | SKU: {sku}"
+            self.combo_item.addItem(display_text, userData=id_item)
+            
+        self.combo_item.blockSignals(False)
+
+    def _update_info_panel(self):
+        """Actualiza el panel derecho con la info detallada y desglose de ubicaciones"""
+        item_id = self.combo_item.currentData()
+        
+        # Lógica de respaldo si el ID se perdió por escritura manual
+        if not item_id:
+            index = self.combo_item.findText(self.combo_item.currentText())
+            if index >= 0:
+                item_id = self.combo_item.itemData(index)
+
+        if not item_id:
+            self.lbl_item_name.setText("Seleccione un item...")
+            self.lbl_current_stock.setText("Stock Actual: -")
+            self.lbl_current_stock.setStyleSheet("font-weight: bold; font-size: 16px; margin-top: 10px; color: #B0BEC5;")
+            return
+
+        # 1. Obtener info básica
+        info = Item.get_details_for_panel(item_id)
+        if not info:
+            return
+
+        # 2. Obtener Stock Total
+        total_stock = Item.get_total_stock(item_id)
+        
+        # --- LÓGICA DE UBICACIONES (ItemLocation) ---
+        locations_list = ItemLocation.list_by_item(item_id)
+        
+        # Construimos el HTML de ubicaciones respetando tu estilo
+        locs_html = "<div style='margin-top: 20px; border-top: 1px solid #555; padding-top: 10px;'>"
+        locs_html += "<b style='color: #f7a51b; font-size: 18px;'>📍 Ubicado en:</b>"
+        
+        if locations_list:
+            locs_html += "<ul style='margin-top: 10px; padding-left: 20px; color: #FFFFFF; font-size: 16px;'>"
+            for loc in locations_list:
+                # loc = {'id_location', 'code', 'type', 'qty'}
+                locs_html += f"<li style='margin-bottom:5px;'><b>{loc['code']}</b> <span style='color:#B0BEC5; font-size:14px;'>({loc['type']})</span>: <span style='color: #66BB6A; font-size: 18px;'><b>{loc['qty']}</b></span></li>"
+            locs_html += "</ul>"
+        else:
+            locs_html += "<div style='color: #90A4AE; font-style: italic; margin-top: 10px; font-size: 16px;'>No hay stock asignado.</div>"
+        
+        locs_html += "</div>"
+        # -----------------------------------------------
+
+        pack_str = ITEM_PACK_TYPE_ES.get(info['pack'], info['pack'])
+        active_str = BOOL_ES.get(info['active'], "Sí")
+
+        details_text = f"""
+        <div style='text-align: center;'>
+            <h2 style='color: #f7a51b; margin-bottom: 5px;'>{info['name']}</h2>
+            <span style='color: #FFFFFF; font-weight: bold; font-size: 14px;'>{info['sku']}</span>
+        </div>
+        <hr style='border: 1px solid #555; margin: 10px 0;'>
+        
+        <table width='100%' cellspacing='4' cellpadding='2' style='font-size: 20px; color: #ECEFF1;'>
+            <tr>
+                <td style='color: #FFFFFF;'>Categoría:</td>
+                <td align='right'><b>{info['category_name']}</b></td>
+            </tr>
+            <tr>
+                <td style='color: #FFFFFF;'>Marca:</td>
+                <td align='right'><b>{info['brand_name']}</b></td>
+            </tr>
+            <tr>
+                <td style='color: #FFFFFF;'>Empaque:</td>
+                <td align='right'><b>{pack_str}</b></td>
+            </tr>
+            <tr>
+                <td style='color: #FFFFFF;'>Activo:</td>
+                <td align='right'><b>{active_str}</b></td>
+            </tr>
+        </table>
+        
+        <div style='margin-top: 15px; color: #CFD8DC; font-style: italic; font-size: 22px; font-weight: bold;'>
+            {info['desc'] or "Sin descripción"}
+        </div>
+        
+        {locs_html}
+        """
+        
+        self.lbl_item_name.setText(details_text)
+        
+        # 5. Semáforo
+        if total_stock <= info['min']:
+            stock_color = "#EF5350" 
+            stock_msg = f"⚠ {total_stock} (Bajo)"
+        else:
+            stock_color = "#66BB6A" 
+            stock_msg = str(total_stock)
+            
+        self.lbl_current_stock.setText(f"Stock Total: {stock_msg}")
+        self.lbl_current_stock.setStyleSheet(f"font-weight: bold; font-size: 24px; margin-top: 10px; color: {stock_color};")
+
     def _on_save(self):
-        raw_item_input = self.input_item.text().strip()
+        # --- CORRECCIÓN DE ROBUSTEZ ---
+        # 1. Intentar obtener el ID directo
+        id_item_resolved = self.combo_item.currentData()
+        
+        # 2. Si es None (el usuario escribió y dio Enter sin clic), buscamos por texto exacto
+        if not id_item_resolved:
+            current_text = self.combo_item.currentText()
+            index = self.combo_item.findText(current_text)
+            if index >= 0:
+                id_item_resolved = self.combo_item.itemData(index)
+        
+        if not id_item_resolved:
+            QMessageBox.warning(self, "Item no válido", "Por favor selecciona un item de la lista sugerida.")
+            return
+        # ------------------------------
+
         qty = int(self.spin_qty.value())
 
-        if self.btn_in.isChecked(): 
-            mov_type = "IN"
-        elif self.btn_out.isChecked(): 
-            mov_type = "OUT"
-        elif self.btn_adjust.isChecked(): 
-            mov_type = "ADJUST"
+        # Determinar tipo
+        mov_type = ""
+        if self.btn_in.isChecked(): mov_type = "IN"
+        elif self.btn_out.isChecked(): mov_type = "OUT"
+        elif self.btn_adjust.isChecked(): mov_type = "ADJUST"
         
         reason = self.combo_reason.currentData()
-
         origin_id = self.combo_origin.currentData()
         dest_id = self.combo_dest.currentData()
-
-        # 2. Validaciones Básicas (Frontend)
-        if not raw_item_input:
-            QMessageBox.warning(self, "Faltan datos", "Debes especificar un Item.")
-            return
             
         if qty <= 0:
             QMessageBox.warning(self, "Error", "La cantidad debe ser mayor a 0.")
@@ -300,9 +431,7 @@ class MovementsWidget(QWidget):
             QMessageBox.warning(self, "Faltan datos", "Debes seleccionar un motivo.")
             return
 
-        # 3. Lógica de Ubicaciones según SQL Constraints
-        # Tu SQL es estricto: IN requiere to_loc, OUT requiere from_loc.
-        
+        # Lógica de Ubicaciones
         final_from = None
         final_to = None
 
@@ -319,25 +448,15 @@ class MovementsWidget(QWidget):
             final_from = origin_id
 
         elif mov_type == "ADJUST":
-            
-            if origin_id and not dest_id:
-                final_from = origin_id 
-            elif dest_id and not origin_id:
-                final_to = dest_id    
-            else:
-                 QMessageBox.warning(self, "Error Lógico", 
-                    "Para un Ajuste en este esquema, seleccione SOLO Origen (para restar) o SOLO Destino (para sumar), no ambos.")
+            if not origin_id and not dest_id:
+                 QMessageBox.warning(self, "Error", "Para un Ajuste debe seleccionar al menos un Origen o un Destino.")
                  return
+            final_from = origin_id if origin_id else None
+            final_to = dest_id if dest_id else None
 
         try:
-            # TODO: Reemplazar '1' con el ID del usuario logueado real
+            # Guardar movimiento
             current_user_id = 1 
-            
-            # Aquí deberías resolver el ID del item si raw_item_input es un SKU
-            # id_item_resolved = Item.get_id_by_sku(raw_item_input)
-            # Usaré un placeholder int(raw_item_input) asumiendo que escribes el ID por ahora
-            id_item_resolved = int(raw_item_input) 
-
             movement = Movement(
                 id_item=id_item_resolved,
                 id_user=current_user_id,
@@ -351,18 +470,27 @@ class MovementsWidget(QWidget):
             new_id = movement.save()
             
             QMessageBox.information(self, "Éxito", f"Movimiento registrado con ID {new_id}")
-            self._on_clear() # Limpiar formulario
+            self._on_clear()
             
-        except ValueError:
-             QMessageBox.critical(self, "Error", "El ID del Item debe ser numérico (o implementa búsqueda por SKU).")
         except Exception as e:
-            # Aquí atrapamos los errores de PostgreSQL (ej. Stock negativo, constraints)
             QMessageBox.critical(self, "Error de Base de Datos", f"No se pudo registrar:\n{e}")
 
+    def _on_completer_activated(self, text):
+        """Maneja la selección desde el menú desplegable del autocompletado"""
+        if not text:
+            return
+        
+        # Buscar el índice del texto seleccionado
+        index = self.combo_item.findText(text)
+        
+        # Si existe, forzamos la selección y actualizamos el panel
+        if index >= 0:
+            self.combo_item.setCurrentIndex(index)
+            self._update_info_panel()
+
     def _on_clear(self):
-        self.input_item.clear()
+        self.combo_item.setCurrentIndex(0)
         self.spin_qty.setValue(1)
-        self.text_notes.clear()
         if self.combo_origin.isEnabled(): self.combo_origin.setCurrentIndex(0)
         if self.combo_dest.isEnabled(): self.combo_dest.setCurrentIndex(0)
             

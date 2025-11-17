@@ -306,7 +306,63 @@ class Item:
             return cur.fetchall()
         finally:
             cur.close()
-            conn.close() 
+            conn.close()
+    
+    @staticmethod
+    def get_details_for_panel(id_item):
+        """Obtiene datos completos con Nombres de Marca/Categoría"""
+        sql = """
+        SELECT 
+            i.name, 
+            i.sku, 
+            i.description, 
+            i.pack_type, 
+            i.min_qty, 
+            i.active,
+            COALESCE(b.name, 'Sin Marca') as brand,
+            COALESCE(c.name, 'Sin Categoría') as category,
+            i.brand_id,
+            i.category_id
+        FROM items i
+        LEFT JOIN brands b ON i.brand_id = b.id_brand
+        LEFT JOIN categories c ON i.category_id = c.id_category
+        WHERE i.id_item = %s
+        """
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (id_item,))
+            row = cur.fetchone()
+            if row:
+                # Retornamos un diccionario para usarlo fácil en la UI
+                return {
+                    "name": row[0], 
+                    "sku": row[1], 
+                    "desc": row[2],
+                    "pack": row[3], 
+                    "min": row[4], 
+                    "active": row[5],
+                    "brand_name": row[6],   # Nombre real
+                    "category_name": row[7] # Nombre real
+                }
+            return None
+        finally:
+            cur.close()
+            conn.close()
+             
+    @staticmethod
+    def get_total_stock(id_item):
+        """Obtiene la suma total de stock de un item en todas las ubicaciones"""
+        sql = "SELECT COALESCE(SUM(qty), 0) FROM item_locations WHERE id_item = %s;"
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (id_item,))
+            row = cur.fetchone()
+            return row[0] if row else 0
+        finally:
+            cur.close()
+            conn.close()
    
         
     def __repr__(self):
