@@ -190,7 +190,7 @@ class RegisterHubWidget(QWidget):
 
     def _open_location_dialog(self):
         dlg = QDialog(self)
-        dlg.setWindowTitle("Registrar locacion")
+        dlg.setWindowTitle("Registrar ubicacion")
         form = LocationFormWidget(dlg)
         lay = QVBoxLayout(dlg)
         lay.addWidget(form)

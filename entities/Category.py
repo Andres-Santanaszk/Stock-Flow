@@ -1,11 +1,12 @@
 from db.connection import get_connection
 
+
 class Category:
     def __init__(
         self,
         id_category=None,
         name=None,
-        class_=None, 
+        class_=None,
         description=None,
         active=True,
         created_at=None,
@@ -13,12 +14,12 @@ class Category:
     ):
         self.id_category = id_category
         self.name = name
-        self.class_ = class_ 
+        self.class_ = class_
         self.description = description
         self.active = active
         self.created_at = created_at
         self.updated_at = updated_at
-        
+
     def add_category(self):
         """
         Inserta una nueva categoría en la base de datos.
@@ -28,20 +29,21 @@ class Category:
             return self.update()
 
         if self.name is None or self.class_ is None:
-            raise ValueError("Los atributos 'name' y 'class_' no pueden ser nulos.")
+            raise ValueError(
+                "Los atributos 'name' y 'class_' no pueden ser nulos.")
 
         sql = """
         INSERT INTO categories (name, class, description, active)
         VALUES (%s, %s, %s, %s)
         RETURNING id_category, created_at, updated_at;
         """
-        
+
         conn = get_connection()
         try:
             cur = conn.cursor()
             cur.execute(sql, (
                 self.name,
-                self.class_,  
+                self.class_,
                 self.description,
                 self.active
             ))
@@ -52,7 +54,7 @@ class Category:
             self.created_at = row[1]
             self.updated_at = row[2]
             return self.id_category
-            
+
         except Exception as e:
             conn.rollback()
             raise e
@@ -62,10 +64,12 @@ class Category:
 
     def update(self):
         if self.id_category is None:
-            raise ValueError("No se puede actualizar una categoría sin id_category.")
-        
+            raise ValueError(
+                "No se puede actualizar una categoría sin id_category.")
+
         if self.name is None or self.class_ is None:
-            raise ValueError("Los atributos 'name' y 'class_' no pueden ser nulos.")
+            raise ValueError(
+                "Los atributos 'name' y 'class_' no pueden ser nulos.")
 
         sql = """
         UPDATE categories
@@ -76,7 +80,7 @@ class Category:
          WHERE id_category = %s
          RETURNING updated_at;
         """
-        
+
         conn = get_connection()
         try:
             cur = conn.cursor()
@@ -92,9 +96,34 @@ class Category:
 
             self.updated_at = row[0]
             return self.id_category
-            
+
         except Exception as e:
             conn.rollback()
+            raise e
+        finally:
+            cur.close()
+            conn.close()
+
+    @staticmethod
+    def get_all_categories():
+        """
+        Recupera el ID y el nombre de todas las categorías (ideales para QComboBox).
+        Devuelve una lista de tuplas: [(id_category, name), ...].
+        """
+        sql = """
+        SELECT id_category, name
+        FROM categories
+        ORDER BY name;
+        """
+
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql)
+            rows = cur.fetchall()
+            return rows
+
+        except Exception as e:
             raise e
         finally:
             cur.close()

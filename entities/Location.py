@@ -1,5 +1,6 @@
 from db.connection import get_connection  # Asumo que tienes esto configurado
 
+
 class Location:
     def __init__(
         self,
@@ -10,15 +11,15 @@ class Location:
         id_location=None
     ):
         self.id_location = id_location
-        self.type = type  
+        self.type = type
         self.code = code
         self.description = description
         self.active = active
 
     def add_location(self):
         if self.id_location is not None:
-            return self.id_location 
-        
+            return self.id_location
+
         sql = """
         INSERT INTO locations
             (code, type, description, active)
@@ -26,7 +27,7 @@ class Location:
             (%s,%s,%s,%s)
         RETURNING id_location;
         """
-        
+
         conn = get_connection()
         try:
             cur = conn.cursor()
@@ -38,7 +39,7 @@ class Location:
             ))
             self.id_location = cur.fetchone()[0]
             conn.commit()
-            
+
             return self.id_location
         except Exception as e:
             conn.rollback()
@@ -54,6 +55,28 @@ class Location:
         Ideal para llenar QComboBox.
         """
         sql = "SELECT id_location, code, type FROM locations WHERE active = TRUE ORDER BY code;"
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql)
+            return cur.fetchall()
+        except Exception as e:
+            raise e
+        finally:
+            cur.close()
+            conn.close()
+
+    @staticmethod
+    def get_all_locations_data():
+        """
+        Retorna una lista de tuplas con todos los campos: 
+        (id_location, type, code, description, active)
+        """
+        sql = """
+        SELECT id_location, type, code, description, active 
+        FROM locations 
+        ORDER BY id_location;
+        """
         conn = get_connection()
         try:
             cur = conn.cursor()

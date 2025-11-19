@@ -1,7 +1,8 @@
 from db.connection import get_connection
 from ui.translations import ITEM_LABELS_ES, ITEM_PACK_TYPE_ES, BOOL_ES
 
-class Item: 
+
+class Item:
     def __init__(
         self,
         name,
@@ -33,7 +34,7 @@ class Item:
     def add_item(self):
         if self.id_item is not None:
             return self.update()
-        
+
         sql = """
         INSERT INTO items
             (name, sku, barcode, brand_id, description, category_id, pack_type, min_qty, active)
@@ -71,7 +72,8 @@ class Item:
 
     def update(self):
         if self.id_item is None:
-            raise ValueError("No puedes actualizar un item sin id_item. agregalo primero.")
+            raise ValueError(
+                "No puedes actualizar un item sin id_item. agregalo primero.")
 
         sql = """
         UPDATE items
@@ -107,7 +109,7 @@ class Item:
                 raise ValueError(f"No existe items.id_item = {self.id_item}")
 
             conn.commit()
-            self.updated_at = row[0]  
+            self.updated_at = row[0]
             return self.updated_at
         except Exception as e:
             conn.rollback()
@@ -165,7 +167,8 @@ class Item:
             conn.close()
 
     @staticmethod
-    def search_by_name(name_fragment, limit=100, offset=0): #Limit son los resultados que queremos, offset los que queremos ignorar
+    # Limit son los resultados que queremos, offset los que queremos ignorar
+    def search_by_name(name_fragment, limit=100, offset=0):
         sql = """
         SELECT
             id_item, name, sku, barcode, brand_id, description, category_id,
@@ -202,7 +205,7 @@ class Item:
         finally:
             cur.close()
             conn.close()
-            
+
     @staticmethod
     def search_by_category(category_id, limit=100, offset=0):
         """
@@ -218,7 +221,7 @@ class Item:
         ORDER BY name
         LIMIT %s OFFSET %s;
         """
-        
+
         conn = get_connection()
         try:
             cur = conn.cursor()
@@ -245,7 +248,7 @@ class Item:
         finally:
             cur.close()
             conn.close()
-            
+
     @staticmethod
     def get_all_brands_for_combo():
         sql = "SELECT id_brand, name FROM brands ORDER BY name;"
@@ -253,7 +256,7 @@ class Item:
         try:
             cur = conn.cursor()
             cur.execute(sql)
-            
+
             return cur.fetchall()
         except Exception as e:
             raise e
@@ -273,8 +276,8 @@ class Item:
             raise e
         finally:
             cur.close()
-            conn.close()      
-    
+            conn.close()
+
     @staticmethod
     def search_items_for_display(name_fragment, limit=100, offset=0):
         """
@@ -296,18 +299,55 @@ class Item:
         ORDER BY i.name
         LIMIT %s OFFSET %s; 
         """
-        
+
         pattern = f"%{name_fragment}%" if name_fragment else ""
         conn = get_connection()
         try:
             cur = conn.cursor()
             cur.execute(sql, (name_fragment or "", pattern, limit, offset))
-            
+
             return cur.fetchall()
         finally:
             cur.close()
-            conn.close() 
-   
-        
+            conn.close()
+
+    @staticmethod
+    def get_all_items_data():
+        """
+        Recupera todos los campos de todos los ítems.
+        Devuelve una lista de tuplas con los datos completos del ítem,
+        ideal para que load_items_data() pueda filtrarlos y mostrarlos.
+        """
+        sql = """
+        SELECT
+            id_item, 
+            name, 
+            sku, 
+            barcode, 
+            brand_id, 
+            description, 
+            category_id, 
+            pack_type, 
+            min_qty, 
+            active, 
+            created_at, 
+            updated_at
+        FROM items
+        ORDER BY name;
+        """
+
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql)
+            rows = cur.fetchall()
+            return rows
+
+        except Exception as e:
+            raise e
+        finally:
+            cur.close()
+            conn.close()
+
     def __repr__(self):
         return f"<Item name={self.name} sku={self.sku} id={self.id_item}>"
