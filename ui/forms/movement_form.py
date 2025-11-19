@@ -40,14 +40,13 @@ class MovementsWidget(QWidget):
         form_layout = QVBoxLayout(self.form_frame)
         form_layout.setSpacing(15)
 
-        # 1. Header Title
+
         title = QLabel("Registro de Movimientos")
         title.setFont(QFont("Segoe UI", 70, QFont.Bold))
         title.setStyleSheet("color: #f7a51b; margin-bottom: 30px;")
         title.setAlignment(Qt.AlignCenter)
         form_layout.addWidget(title)
 
-        # 2. Movement Type Selectors (Toggle Buttons)
         type_layout = QHBoxLayout()
         self.btn_in = self.create_type_button(MOV_TYPE_ES["IN"], "mdi.import", "#4CAF50", "#66BB6A")
         self.btn_out = self.create_type_button(MOV_TYPE_ES["OUT"], "mdi.export", "#E91511", "#EF5350")
@@ -58,18 +57,15 @@ class MovementsWidget(QWidget):
         type_layout.addWidget(self.btn_adjust)
         form_layout.addLayout(type_layout)
 
-        # Separator
         line = QFrame()
         line.setFrameShape(QFrame.HLine)
         line.setStyleSheet("color: #555555;")
         form_layout.addWidget(line)
 
-        # 3. Form Fields (Grid Layout)
         grid = QGridLayout()
         grid.setVerticalSpacing(15)
         grid.setHorizontalSpacing(20)
-        
-        # Row 1: SKU/Item Selection
+
         lbl_item = QLabel("Item / SKU:")
         
         self.combo_item = QComboBox()
@@ -78,10 +74,8 @@ class MovementsWidget(QWidget):
         self.combo_item.setPlaceholderText("Buscar por nombre...")
         self.combo_item.setFixedHeight(35)
         
-        # Conectar señal de cambio para actualizar panel derecho
         self.combo_item.currentIndexChanged.connect(self._update_info_panel)
         
-        # Configurar autocompletado
         completer = self.combo_item.completer()
         completer.setFilterMode(Qt.MatchContains)
         completer.setCompletionMode(QCompleter.PopupCompletion)
@@ -99,7 +93,6 @@ class MovementsWidget(QWidget):
         grid.addWidget(lbl_item, 0, 0)
         grid.addLayout(item_layout, 0, 1)
 
-        # Row 2: Quantity
         lbl_qty = QLabel("Cantidad:")
         self.spin_qty = QSpinBox()
         self.spin_qty.setRange(1, 500)
@@ -107,8 +100,6 @@ class MovementsWidget(QWidget):
         grid.addWidget(lbl_qty, 1, 0)
         grid.addWidget(self.spin_qty, 1, 1)
 
-        # Row 3: Locations (Dynamic)
-        # Based on your SQL: from_location_id vs to_location_id
         lbl_origin = QLabel("Ubicación Origen:")
         self.combo_origin = QComboBox()
         
@@ -120,10 +111,9 @@ class MovementsWidget(QWidget):
         grid.addWidget(lbl_dest, 3, 0)
         grid.addWidget(self.combo_dest, 3, 1)
 
-        # Row 4: Reason (Enum from SQL)
         lbl_reason = QLabel("Motivo:")
         self.combo_reason = QComboBox()
-        # Populate with SQL enums placeholders
+
         grid.addWidget(lbl_reason, 4, 0)
         grid.addWidget(self.combo_reason, 4, 1)
 
@@ -131,7 +121,6 @@ class MovementsWidget(QWidget):
 
         form_layout.addStretch()
 
-        # Submit Button
         self.btn_submit = QPushButton("Registrar Movimiento")
         self.btn_submit.setObjectName("SubmitButton")
         self.btn_submit.setCursor(Qt.PointingHandCursor)
@@ -139,8 +128,6 @@ class MovementsWidget(QWidget):
         self.btn_submit.setIconSize(QSize(20, 20))
         form_layout.addWidget(self.btn_submit)
 
-        # --- Right Panel: Preview / Info (Optional visual aid) ---
-        # This helps fill the wide screen and gives feedback to the user
         self.info_frame = QFrame()
         self.info_frame.setObjectName("InfoFrame")
         self.info_frame.setFixedWidth(300)
@@ -149,8 +136,7 @@ class MovementsWidget(QWidget):
         info_title = QLabel("Detalles del Ítem")
         info_title.setFont(QFont("Segoe UI", 14, QFont.Bold))
         info_layout.addWidget(info_title)
-        
-        # Placeholder for item info
+
         self.lbl_item_name = QLabel("Seleccione un item...")
         self.lbl_item_name.setWordWrap(True)
         self.lbl_item_name.setStyleSheet("color: #B0BEC5; font-size: 14px;")
@@ -163,10 +149,9 @@ class MovementsWidget(QWidget):
         info_layout.addStretch()
         
         # Add frames to main layout
-        main_layout.addWidget(self.form_frame, 70) # 70% width
-        main_layout.addWidget(self.info_frame, 30) # 30% width
+        main_layout.addWidget(self.form_frame, 70) 
+        main_layout.addWidget(self.info_frame, 30) 
 
-        # Connect signals
         self.btn_in.clicked.connect(lambda: self.set_movement_type("IN"))
         self.btn_out.clicked.connect(lambda: self.set_movement_type("OUT"))
         self.btn_adjust.clicked.connect(lambda: self.set_movement_type("ADJUST"))
@@ -250,7 +235,7 @@ class MovementsWidget(QWidget):
             self.combo_origin.setEnabled(True)
             self.combo_origin.setCurrentIndex(0)
             self.combo_dest.setCurrentIndex(0)
-            self.combo_dest.setEnabled(True) # Usually Adjust implies removing stock or changing qty
+            self.combo_dest.setEnabled(True) 
             self.update_reasons([
                 "scrap",
                 "damage",
@@ -307,8 +292,7 @@ class MovementsWidget(QWidget):
         if not item_id:
             self.combo_origin.blockSignals(False)
             return
-
-        # Usamos el ItemLocation que ya tienes importado
+        
         locations_list = ItemLocation.list_by_item(item_id)
 
         if locations_list:
@@ -344,8 +328,7 @@ class MovementsWidget(QWidget):
     def _update_info_panel(self):
         """Actualiza el panel derecho con la info detallada y desglose de ubicaciones"""
         item_id = self.combo_item.currentData()
-        
-        # Lógica de respaldo si el ID se perdió por escritura manual
+
         if not item_id:
             index = self.combo_item.findText(self.combo_item.currentText())
             if index >= 0:
@@ -360,15 +343,12 @@ class MovementsWidget(QWidget):
             self.lbl_current_stock.setStyleSheet("font-weight: bold; font-size: 16px; margin-top: 10px; color: #B0BEC5;")
             return
 
-        # 1. Obtener info básica
         info = Item.get_details_for_panel(item_id)
         if not info:
             return
 
-        # 2. Obtener Stock Total
         total_stock = Item.get_total_stock(item_id)
-        
-        # --- LÓGICA DE UBICACIONES (ItemLocation) ---
+
         locations_list = ItemLocation.list_by_item(item_id)
         
         locs_html = "<div style='margin-top: 20px; border-top: 1px solid #555; padding-top: 10px;'>"
@@ -377,7 +357,6 @@ class MovementsWidget(QWidget):
         if locations_list:
             locs_html += "<ul style='margin-top: 10px; padding-left: 20px; color: #FFFFFF; font-size: 16px;'>"
             for loc in locations_list:
-                # loc = {'id_location', 'code', 'type', 'qty'}
                 locs_html += f"<li style='margin-bottom:5px;'><b>{loc['code']}</b> <span style='color:#B0BEC5; font-size:14px;'>({loc['type']})</span>: <span style='color: #66BB6A; font-size: 18px;'><b>{loc['qty']}</b></span></li>"
             locs_html += "</ul>"
         else:
@@ -422,8 +401,7 @@ class MovementsWidget(QWidget):
         """
         
         self.lbl_item_name.setText(details_text)
-        
-        # 5. Semáforo
+
         if total_stock <= info['min']:
             stock_color = "#EF5350" 
             stock_msg = f"⚠ {total_stock} (Bajo)"
@@ -449,7 +427,6 @@ class MovementsWidget(QWidget):
         
         qty = int(self.spin_qty.value())
 
-        # Determinar tipo
         mov_type = ""
         if self.btn_in.isChecked(): mov_type = "IN"
         elif self.btn_out.isChecked(): mov_type = "OUT"
@@ -467,7 +444,7 @@ class MovementsWidget(QWidget):
             QMessageBox.warning(self, "Faltan datos", "Debes seleccionar un motivo.")
             return
 
-        # Lógica de Ubicaciones
+
         final_from = None
         final_to = None
 
@@ -514,7 +491,6 @@ class MovementsWidget(QWidget):
             final_to = dest_id if dest_id else None
 
         try:
-            # Guardar movimiento
             current_user_id = 1 
             movement = Movement(
                 id_item=id_item_resolved,
@@ -539,10 +515,9 @@ class MovementsWidget(QWidget):
         if not text:
             return
         
-        # Buscar el índice del texto seleccionado
         index = self.combo_item.findText(text)
         
-        # Si existe, forzamos la selección y actualizamos el panel
+
         if index >= 0:
             self.combo_item.setCurrentIndex(index)
             self._update_info_panel()
