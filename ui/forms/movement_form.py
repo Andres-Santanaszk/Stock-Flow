@@ -22,6 +22,14 @@ class MovementsWidget(QWidget):
         self.load_items_for_search()
         self.set_movement_type("IN")
 
+    def showEvent(self, event):
+        """Se ejecuta automáticamente cada vez que esta ventana se muestra"""
+        super().showEvent(event)
+        self.load_items_for_search()
+        self.load_locations()
+        
+        self._on_clear()
+
     def setup_ui(self):
         main_layout = QHBoxLayout(self)
         main_layout.setContentsMargins(20, 20, 20, 20)
@@ -231,6 +239,11 @@ class MovementsWidget(QWidget):
                 "transfer_out",
                 "manufacture_consume",
             ])
+            current_item_id = self.combo_item.currentData()
+            if current_item_id:
+                self._filter_origin_locations(current_item_id)
+            else:
+                self.combo_origin.clear()
 
         elif mov_type == "ADJUST":
             active_btn = self.btn_adjust
@@ -243,6 +256,11 @@ class MovementsWidget(QWidget):
                 "damage",
                 "relocation",
             ])
+            current_item_id = self.combo_item.currentData()
+            if current_item_id:
+                self._filter_origin_locations(current_item_id)
+            else:
+                self.combo_origin.clear()
 
         active_btn.setChecked(True)
         accent = active_btn.property("accent_color")
@@ -281,6 +299,27 @@ class MovementsWidget(QWidget):
             self.combo_origin.addItem(code, userData=loc_id)
             self.combo_dest.addItem(code, userData=loc_id)
             
+    def _filter_origin_locations(self, item_id):
+        self.combo_origin.blockSignals(True)
+        self.combo_origin.clear()
+        self.combo_origin.addItem("", userData=None) 
+
+        if not item_id:
+            self.combo_origin.blockSignals(False)
+            return
+
+        # Usamos el ItemLocation que ya tienes importado
+        locations_list = ItemLocation.list_by_item(item_id)
+
+        if locations_list:
+            for loc in locations_list:
+                display_text = f"{loc['code']} (Disp: {loc['qty']})"
+                self.combo_origin.addItem(display_text, userData=loc['id_location'])
+        else:
+            self.combo_origin.setPlaceholderText("")
+
+        self.combo_origin.blockSignals(False)       
+            
     from PySide6.QtWidgets import QMessageBox
 
     def load_items_for_search(self):
@@ -312,6 +351,9 @@ class MovementsWidget(QWidget):
             if index >= 0:
                 item_id = self.combo_item.itemData(index)
 
+        if self.btn_out.isChecked() or self.btn_adjust.isChecked():
+            self._filter_origin_locations(item_id)
+
         if not item_id:
             self.lbl_item_name.setText("Seleccione un item...")
             self.lbl_current_stock.setText("Stock Actual: -")
@@ -329,7 +371,6 @@ class MovementsWidget(QWidget):
         # --- LÓGICA DE UBICACIONES (ItemLocation) ---
         locations_list = ItemLocation.list_by_item(item_id)
         
-        # Construimos el HTML de ubicaciones respetando tu estilo
         locs_html = "<div style='margin-top: 20px; border-top: 1px solid #555; padding-top: 10px;'>"
         locs_html += "<b style='color: #f7a51b; font-size: 18px;'>📍 Ubicado en:</b>"
         
@@ -343,7 +384,6 @@ class MovementsWidget(QWidget):
             locs_html += "<div style='color: #90A4AE; font-style: italic; margin-top: 10px; font-size: 16px;'>No hay stock asignado.</div>"
         
         locs_html += "</div>"
-        # -----------------------------------------------
 
         pack_str = ITEM_PACK_TYPE_ES.get(info['pack'], info['pack'])
         active_str = BOOL_ES.get(info['active'], "Sí")
@@ -395,11 +435,8 @@ class MovementsWidget(QWidget):
         self.lbl_current_stock.setStyleSheet(f"font-weight: bold; font-size: 24px; margin-top: 10px; color: {stock_color};")
 
     def _on_save(self):
-        # --- CORRECCIÓN DE ROBUSTEZ ---
-        # 1. Intentar obtener el ID directo
         id_item_resolved = self.combo_item.currentData()
         
-        # 2. Si es None (el usuario escribió y dio Enter sin clic), buscamos por texto exacto
         if not id_item_resolved:
             current_text = self.combo_item.currentText()
             index = self.combo_item.findText(current_text)
@@ -409,8 +446,7 @@ class MovementsWidget(QWidget):
         if not id_item_resolved:
             QMessageBox.warning(self, "Item no válido", "Por favor selecciona un item de la lista sugerida.")
             return
-        # ------------------------------
-
+        
         qty = int(self.spin_qty.value())
 
         # Determinar tipo
@@ -448,10 +484,33 @@ class MovementsWidget(QWidget):
             final_from = origin_id
 
         elif mov_type == "ADJUST":
-            if not origin_id and not dest_id:
-                 QMessageBox.warning(self, "Error", "Para un Ajuste debe seleccionar al menos un Origen o un Destino.")
+            # 1. Validación de ORIGEN (Siempre estricta)
+            if not origin_id:
+                 QMessageBox.warning(self, "Faltan datos", "Para un Ajuste debe seleccionar el Origen.")
                  return
-            final_from = origin_id if origin_id else None
+
+
+            reason_key = self.combo_reason.currentData()
+            
+            if not dest_id:
+                if reason_key == "relocation":
+                    QMessageBox.warning(self, "Faltan datos", "Para una 'Reubicación', la Ubicación Destino es obligatoria.")
+                    return
+                
+                # CASO B: Si es Scrap/Daño, advertir que se eliminará (Hard Delete)
+                else:
+                    msg = (
+                        "No ha seleccionado destino.\n\n"
+                        "Esto registrará una BAJA DEFINITIVA (el stock se restará y no irá a ningún lado).\n"
+                        "¿Está seguro de continuar?"
+                    )
+                    reply = QMessageBox.question(self, "Confirmar Baja", msg, QMessageBox.Yes | QMessageBox.No)
+                    
+                    if reply == QMessageBox.No:
+                        return
+                    # Si dice Yes, final_to se queda como None
+            
+            final_from = origin_id
             final_to = dest_id if dest_id else None
 
         try:

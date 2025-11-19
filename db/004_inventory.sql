@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS movements (
   id_mov            SERIAL PRIMARY KEY,
   id_item           INT NOT NULL REFERENCES items(id_item) ON DELETE RESTRICT,
   id_user           INT NOT NULL REFERENCES users(id_user) ON DELETE RESTRICT,
-  type              mov_type NOT NULL,      -- 'IN','OUT','ADJUST'
+  type              mov_type NOT NULL,      
   reason            mov_reason NOT NULL,    
   qty               INT NOT NULL,           
   created_at        TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -140,7 +140,6 @@ DECLARE
 BEGIN
   qty_abs := ABS(NEW.qty);
 
-  -- 1. GESTIÓN DE ORIGEN (Salida) - Se mantiene estricto
   IF NEW.from_location_id IS NOT NULL THEN
     UPDATE item_locations 
        SET qty = qty - qty_abs 
@@ -159,16 +158,13 @@ BEGIN
     END IF;
   END IF;
 
-  -- 2. GESTIÓN DE DESTINO (Entrada) - Modo "Auto-asignación"
   IF NEW.to_location_id IS NOT NULL THEN
-    
-    -- Intentamos actualizar primero
+
     UPDATE item_locations 
        SET qty = qty + qty_abs 
      WHERE id_item = NEW.id_item 
        AND id_location = NEW.to_location_id;
 
-    -- SI NO EXISTE, LO CREAMOS AUTOMÁTICAMENTE (Upsert manual)
     IF NOT FOUND THEN
       INSERT INTO item_locations (id_item, id_location, qty)
       VALUES (NEW.id_item, NEW.to_location_id, qty_abs);

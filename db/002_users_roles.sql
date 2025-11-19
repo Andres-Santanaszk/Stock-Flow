@@ -22,7 +22,10 @@ CREATE TABLE IF NOT EXISTS users (
   email VARCHAR(254) NOT NULL UNIQUE,
   password_hash VARCHAR(255) NOT NULL,
   active BOOLEAN NOT NULL DEFAULT TRUE,
-  role_id INT REFERENCES roles(id)
+  role_id INT REFERENCES roles(id),
+
+  CONSTRAINT chk_users_email_format
+    CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
 );
 
 CREATE INDEX IF NOT EXISTS ix_users_role_id ON users(role_id);

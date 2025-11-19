@@ -1,6 +1,4 @@
-import sys
 from pathlib import Path
-import qdarktheme
 import qtawesome as qta
 
 from PySide6.QtWidgets import (
@@ -27,7 +25,11 @@ ROLES_PERMISSIONS = {
     "Líder de Producción / Otro": ["Requests", "Visibility", "Dashboard"]
 }
 BASE_DIR = Path(__file__).resolve().parent
-logo_path = BASE_DIR / "utils" / "logo_white_letters.svg"
+
+UTILS_DIR = BASE_DIR / "utils" 
+
+logo_path = UTILS_DIR / "logo_white_letters.svg"
+icon_path = UTILS_DIR / "icon.png"
 
 class PlaceholderWidget(QFrame):
     def __init__(self, title, user_role, parent=None):
@@ -64,6 +66,7 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("Stock Flow")
+        self.setWindowIcon(QIcon(str(icon_path)))
         self.setGeometry(100, 100, 1200, 800)
         
         self.current_user_role = "Administrador" 
@@ -270,8 +273,8 @@ class MainWindow(QMainWindow):
         user_info_frame = QFrame()
         user_info_frame.setStyleSheet("""
             QFrame {
-                border-top: 1px solid #555555; 
-                padding-top: 10px;
+                border-top: 5px; 
+                padding-top: 1px;
             }
             QLabel {
                 color: #ECEFF1; 
@@ -280,8 +283,8 @@ class MainWindow(QMainWindow):
         user_info_layout = QVBoxLayout(user_info_frame)
         user_info_layout.setContentsMargins(0, 0, 0, 0)
         
-        role_label = QLabel(f"Rol: <b>{self.current_user_role}</b>")
-        role_label.setFont(QFont("Segoe UI", 10))
+        role_label = QLabel(f"Bienvenido, <b>{self.current_user_role}</b>")
+        role_label.setFont(QFont("Segoe UI", 13))
         user_info_layout.addWidget(role_label)
         
         btn_logout = QPushButton("Cerrar Sesión / Logout")
@@ -341,35 +344,16 @@ class MainWindow(QMainWindow):
                 print(f"INFO: Botón '{key}' deshabilitado para rol '{self.current_user_role}'.")
 
     def _handle_logout(self):
-        """Simulación de la acción de cerrar sesión."""
-        print("INFO: Usuario cerró sesión (Logout).")
         self.close()
+
         login_dialog = LoginDialog()
         if login_dialog.exec() == QDialog.Accepted and login_dialog.valid_login:
             main_window = MainWindow()
             main_window.show()
-            app.main_window = main_window
+            app = QApplication.instance()
+            if app is not None:
+                app.main_window = main_window
+
         
 
-if __name__ == "__main__":
-    app = QApplication(sys.argv)
-    
-    qdarktheme.setup_theme()
-    
-    icon_path = BASE_DIR / "utils" / "icon.png"
-    app_icon = QIcon(str(icon_path))
-    app.setWindowIcon(app_icon)
-    app.setFont(QFont("Segoe UI"))
-    
-    login_dialog = LoginDialog()
-    if login_dialog.exec() == QDialog.Accepted and login_dialog.valid_login:
-        main_window = MainWindow()
-        main_window.show()
-        app.main_window = main_window
-        sys.exit(app.exec())
-    else:
-        print("INFO: Inicio de sesión cancelado o inválido.")
-        sys.exit(0)
 
-    
-    sys.exit(app.exec())

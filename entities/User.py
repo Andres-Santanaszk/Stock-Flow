@@ -1,50 +1,102 @@
-import psycopg2 
-from bcrypt import checkpw # Para encriptar
+from db.connection import get_connection
 
 class User:
-    def __init__(self, id_user=None, full_name=None, email=None, password=None, active=True, role_id=None, create_at=None, updated_at=None):
+    def __init__(
+        self,
+        full_name,
+        email,
+        password_hash,
+        active=True,
+        role_id=None,
+        id_user=None,
+    ):
         self.id_user = id_user
         self.full_name = full_name
         self.email = email
-        self.password = password
+        self.password_hash = password_hash # password_hash YA VENDRA HASHEADO
         self.active = active
         self.role_id = role_id
-        self.created_at = create_at
-        self.updated_at = updated_at
-    
-    def create(self):
+
+    def add_user(self):
         """
-        Inserta un nuevo usuario en la base de datos, generando el hash seguro de su contraseña con bcrypt antes de guardarla
+        Inserta un nuevo usuario en la tabla users.
+        Si ya tiene id_user, en lugar de insertar llama a update().
         """
-        pass
+        if self.id_user is not None:
+            return self.update()
+
+        sql = """
+        INSERT INTO users
+            (full_name, email, password_hash, role_id)
+        VALUES
+            (%s, %s, %s, %s)
+        RETURNING id_user;
+        """
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                sql,
+                (
+                    self.full_name,
+                    self.email,
+                    self.password_hash,
+                    self.role_id,
+                ),
+            )
+            row = cur.fetchone()
+            conn.commit()
+
+            self.id_user = row[0]
+            return self.id_user
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            cur.close()
+            conn.close()
 
     def update(self):
         """
-        Actualiza la información del usuario, como su nombre, correo o rol
+        Actualiza los datos del usuario existente.
         """
-        pass
+        if self.id_user is None:
+            raise ValueError("No puedes actualizar un usuario sin id_user. Guárdalo primero.")
 
-    def check_password(self):
+        sql = """
+        UPDATE users
+           SET full_name     = %s,
+               email         = %s,
+               password_hash = %s,
+               active        = %s,
+               role_id       = %s
+         WHERE id_user = %s;
         """
-        Verifica si la contraseña ingresada coincide con el hash guardado utilizando bcrypt.checkpw()
-        """
-        pass
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(
+                sql,
+                (
+                    self.full_name,
+                    self.email,
+                    self.password_hash,
+                    self.active,
+                    self.role_id,
+                    self.id_user,
+                ),
+            )
+            if cur.rowcount == 0:
+                raise ValueError(f"No existe users.id_user = {self.id_user}")
 
-    @staticmethod
-    def authenticate():
-        """
-        Comprueba las credenciales de un usuario, si el correo existe y la contraseña es correcta, devuelve el usuario; de lo contrario, devuelve, None
-        """
-        pass
-    @staticmethod
-    def list_all():
-        """
-        Obtiene una lista de todos los usuarios registrados, con opción de filtrar por estado activo.
-        """
-        pass
+            conn.commit()
+            return True
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            cur.close()
+            conn.close()
 
     def __repr__(self):
-        """
-        Devuelve una representación corta del usuario mostrando su nombre y correo
-        """
-        pass
+        return f"<User id={self.id_user} email={self.email} role_id={self.role_id}>"

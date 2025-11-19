@@ -352,8 +352,17 @@ class Item:
              
     @staticmethod
     def get_total_stock(id_item):
-        """Obtiene la suma total de stock de un item en todas las ubicaciones"""
-        sql = "SELECT COALESCE(SUM(qty), 0) FROM item_locations WHERE id_item = %s;"
+        """
+        Obtiene el stock disponible (excluyendo ScrapArea).
+        Realiza un INNER JOIN para verificar el tipo de ubicación.
+        """
+        sql = """
+            SELECT COALESCE(SUM(il.qty), 0) 
+            FROM item_locations il
+            JOIN locations l ON il.id_location = l.id_location
+            WHERE il.id_item = %s 
+              AND l.type != 'ScrapArea';
+        """
         conn = get_connection()
         try:
             cur = conn.cursor()
