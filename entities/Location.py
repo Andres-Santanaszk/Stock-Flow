@@ -71,7 +71,6 @@ class Location:
         """
         Retorna una lista de valores únicos y ordenados para un campo específico (type o code).
         """
-        # **Seguridad:** Mapear el nombre del campo para evitar inyección SQL en el nombre de la columna.
         safe_fields = {'type': 'type', 'code': 'code'}
         db_field = safe_fields.get(field_name)
 
@@ -84,7 +83,6 @@ class Location:
         try:
             cur = conn.cursor()
             cur.execute(sql)
-            # Retorna solo el valor único de la tupla (ej: ('Rack',), ('Shelf',) -> ['Rack', 'Shelf'])
             return [row[0] for row in cur.fetchall()]
         except Exception as e:
             raise e
@@ -107,7 +105,6 @@ class Location:
         params = []
         where_clauses = []
 
-        # 1. Filtro por campo y valor (type o code)
         if filter_field and filter_value:
             safe_fields = {'type': 'type', 'code': 'code'}
             db_field = safe_fields.get(filter_field)
@@ -116,19 +113,12 @@ class Location:
                 where_clauses.append(f"{db_field} = %s")
                 params.append(filter_value)
 
-        # 2. Filtro por término de búsqueda (LIKE) en code o description
         if search_term:
-            # Usamos ILIKE para búsqueda insensible a mayúsculas/minúsculas en PostgreSQL
-            # Buscamos coincidencias parciales en code o description
             search_clause = "(code ILIKE %s OR description ILIKE %s)"
             where_clauses.append(search_clause)
 
-            # El término de búsqueda debe estar rodeado de '%' para LIKE/ILIKE
             like_term = f"%{search_term}%"
-            # Agregamos el término 2 veces para los 2 %s
             params.extend([like_term, like_term])
-
-        # 3. Construir la cláusula WHERE final
         if where_clauses:
             sql += " WHERE " + " AND ".join(where_clauses)
 
