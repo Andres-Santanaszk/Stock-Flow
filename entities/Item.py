@@ -167,7 +167,6 @@ class Item:
             conn.close()
 
     @staticmethod
-    # Limit son los resultados que queremos, offset los que queremos ignorar
     def search_by_name(name_fragment, limit=100, offset=0):
         sql = """
         SELECT
@@ -312,37 +311,169 @@ class Item:
             conn.close()
 
     @staticmethod
-    def get_all_items_data():
+    def get_details_for_panel(id_item):
+        """Obtiene datos completos con Nombres de Marca/Categoría"""
+        sql = """
+        SELECT 
+            i.name, 
+            i.sku, 
+            i.description, 
+            i.pack_type, 
+            i.min_qty, 
+            i.active,
+            COALESCE(b.name, 'Sin Marca') as brand,
+            COALESCE(c.name, 'Sin Categoría') as category,
+            i.brand_id,
+            i.category_id
+        FROM items i
+        LEFT JOIN brands b ON i.brand_id = b.id_brand
+        LEFT JOIN categories c ON i.category_id = c.id_category
+        WHERE i.id_item = %s
         """
-        Recupera todos los campos de todos los ítems.
-        Devuelve una lista de tuplas con los datos completos del ítem,
-        ideal para que load_items_data() pueda filtrarlos y mostrarlos.
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (id_item,))
+            row = cur.fetchone()
+            if row:
+                return {
+                    "name": row[0],
+                    "sku": row[1],
+                    "desc": row[2],
+                    "pack": row[3],
+                    "min": row[4],
+                    "active": row[5],
+                    "brand_name": row[6],
+                    "category_name": row[7]
+                }
+            return None
+        finally:
+            cur.close()
+            conn.close()
+
+    @staticmethod
+    def get_total_stock(id_item):
+        """
+        Obtiene el stock disponible (excluyendo ScrapArea).
+        Realiza un INNER JOIN para verificar el tipo de ubicación.
         """
         sql = """
-        SELECT
-            id_item, 
-            name, 
-            sku, 
-            barcode, 
-            brand_id, 
-            description, 
-            category_id, 
-            pack_type, 
-            min_qty, 
-            active, 
-            created_at, 
-            updated_at
-        FROM items
-        ORDER BY name;
+            SELECT COALESCE(SUM(il.qty), 0) 
+            FROM item_locations il
+            JOIN locations l ON il.id_location = l.id_location
+            WHERE il.id_item = %s 
+              AND l.type != 'ScrapArea';
         """
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (id_item,))
+            row = cur.fetchone()
+            return row[0] if row else 0
+        finally:
+            cur.close()
+            conn.close()
+
+    @staticmethod
+    def get_items_for_display(filter_field=None, filter_value=None, search_term=None):
+        """
+        Obtiene ítems con nombre de Marca/Categoría y Stock Total.
+        Aplica filtros y/o término de búsqueda si se proporcionan.
+        Si el stock total es 0, el ítem se marca como INACTIVO en la vista.
+        """
+
+        stock_subquery = """
+                (SELECT COALESCE(SUM(il.qty), 0)
+                 FROM item_locations il
+                 JOIN locations l ON il.id_location = l.id_location
+                 WHERE il.id_item = i.id_item AND l.type != 'ScrapArea'
+                )
+            """
+
+        sql = f"""
+        SELECT
+            i.id_item,
+            i.name,
+            i.sku,
+            i.pack_type,
+            i.min_qty,
+            -- COLUMNA 6: Estado 'activo' efectivo. Es FALSE si el stock es 0.
+            CASE
+                WHEN {stock_subquery} = 0 THEN FALSE
+                ELSE i.active
+            END AS effective_active,
+            COALESCE(b.name, 'Sin Marca') AS brand_name,
+            COALESCE(c.name, 'Sin Categoría') AS category_name,
+            -- COLUMNA 9: Stock Total (repetido para la columna de la tabla)
+            COALESCE({stock_subquery}, 0) AS total_stock
+        FROM items i
+        LEFT JOIN brands b ON i.brand_id = b.id_brand
+        LEFT JOIN categories c ON i.category_id = c.id_category
+        """
+        params = []
+        where_clauses = []
+
+        safe_fields = {
+            'brand': 'b.name',
+            'category': 'c.name',
+            'sku': 'i.sku'
+        }
+
+        if filter_field and filter_value and filter_field in safe_fields:
+            db_field = safe_fields.get(filter_field)
+            where_clauses.append(f"{db_field} = %s")
+            params.append(filter_value)
+
+        if search_term:
+            search_clause = "(i.name ILIKE %s OR i.sku ILIKE %s)"
+            where_clauses.append(search_clause)
+
+            like_term = f"%{search_term}%"
+            params.extend([like_term, like_term])
+
+        if where_clauses:
+            sql += " WHERE " + " AND ".join(where_clauses)
+
+        sql += " ORDER BY i.name;"
+
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, params)
+            return cur.fetchall()
+        except Exception as e:
+            raise e
+        finally:
+            cur.close()
+            conn.close()
+
+    @staticmethod
+    def get_unique_values_for_field(field_name):
+        """
+        Retorna valores únicos para los campos de filtro: Brand, Category, o SKU.
+        """
+        safe_fields = {
+            'brand': 'b.name',
+            'category': 'c.name',
+            'sku': 'i.sku'
+        }
+        db_field = safe_fields.get(field_name)
+
+        if not db_field:
+            raise ValueError(f"Campo de filtrado no válido: {field_name}")
+
+        if field_name == 'brand':
+            sql = f"SELECT DISTINCT COALESCE(b.name, 'Sin Marca') FROM items i LEFT JOIN brands b ON i.brand_id = b.id_brand ORDER BY 1;"
+        elif field_name == 'category':
+            sql = f"SELECT DISTINCT COALESCE(c.name, 'Sin Categoría') FROM items i LEFT JOIN categories c ON i.category_id = c.id_category ORDER BY 1;"
+        else:
+            sql = f"SELECT DISTINCT {db_field} FROM items i ORDER BY 1;"
 
         conn = get_connection()
         try:
             cur = conn.cursor()
             cur.execute(sql)
-            rows = cur.fetchall()
-            return rows
-
+            return [row[0] for row in cur.fetchall() if row[0] is not None]
         except Exception as e:
             raise e
         finally:

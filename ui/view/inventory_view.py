@@ -1,7 +1,8 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QDialog,
     QLabel, QToolButton, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView,
-    QComboBox,)
+    QComboBox, QLineEdit
+)
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIcon, QFont
 from pathlib import Path
@@ -52,8 +53,6 @@ class view_item(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self._load_metadata()
-
         self.lbl_title = QLabel("Inventario de Ítems")
         self.lbl_title.setFont(QFont("Segoe UI", 48, QFont.Bold))
         self.lbl_title.setAlignment(Qt.AlignCenter)
@@ -63,7 +62,6 @@ class view_item(QWidget):
         self.lbl_subtitle.setFont(QFont("Segoe UI", 18))
         self.lbl_subtitle.setAlignment(Qt.AlignCenter)
         self.lbl_subtitle.setObjectName("HubSubtitle")
-
         self.btn_update_link = QPushButton(
             "actualizar tabla"
         )
@@ -71,31 +69,47 @@ class view_item(QWidget):
         self.btn_update_link.setCursor(Qt.PointingHandCursor)
         self.btn_update_link.clicked.connect(self.load_items_data)
 
-        self.cmb_brand = QComboBox()
-        self.cmb_brand.setFixedWidth(200)
+        self.cmb_filter_field = QComboBox()
+        self.cmb_filter_field.addItem("Marca", userData="brand")
+        self.cmb_filter_field.addItem("Categoría", userData="category")
+        self.cmb_filter_field.addItem("SKU", userData="sku")
+        self.cmb_filter_field.setFixedWidth(120)
+        self.cmb_filter_field.currentIndexChanged.connect(
+            self._update_filter_values)
 
-        self.cmb_brand.currentIndexChanged.connect(self.load_items_data)
+        self.cmb_filter_value = QComboBox()
+        self.cmb_filter_value.setFixedWidth(200)
+        self.cmb_filter_value.currentIndexChanged.connect(
+            self.load_items_data)
 
-        self.cmb_category = QComboBox()
-        self.cmb_category.setFixedWidth(200)
-        self.cmb_category.currentIndexChanged.connect(self.load_items_data)
+        self.txt_search = QLineEdit()
+        self.txt_search.setPlaceholderText(
+            "Buscar por Nombre o SKU")
+        self.txt_search.setClearButtonEnabled(True)
+        self.txt_search.setFixedWidth(400)
+        self.txt_search.textChanged.connect(self.load_items_data)
 
         self.table_items = QTableWidget()
         self._setup_table()
 
         main_layout = QVBoxLayout()
         filter_layout = QHBoxLayout()
+        search_layout = QHBoxLayout()
 
-        filter_layout.addWidget(QLabel("Marca:"))
-        filter_layout.addWidget(self.cmb_brand)
-        filter_layout.addWidget(QLabel("Categoría:"))
-        filter_layout.addWidget(self.cmb_category)
+        filter_layout.addWidget(QLabel("Filtrar por:"))
+        filter_layout.addWidget(self.cmb_filter_field)
+        filter_layout.addWidget(self.cmb_filter_value)
         filter_layout.addStretch(1)
+
+        search_layout.addWidget(QLabel("Búsqueda:"))
+        search_layout.addWidget(self.txt_search)
+        search_layout.addStretch(1)
 
         main_layout.addWidget(self.lbl_title)
         main_layout.addWidget(self.lbl_subtitle)
 
         main_layout.addLayout(filter_layout)
+        main_layout.addLayout(search_layout)
         main_layout.addWidget(self.table_items)
 
         main_layout.addStretch(1)
@@ -141,7 +155,7 @@ class view_item(QWidget):
                 text-decoration: underline;
                 color: #f7a51b;
             }
-            QComboBox {
+            QComboBox, QLineEdit {
                 padding: 5px;
                 border-radius: 4px;
                 background-color: #3C3F41;
@@ -153,60 +167,32 @@ class view_item(QWidget):
                 font-size: 14px;
             }
         """)
-        self.load_items_data(initial_load=True)
+        self._update_filter_values()
 
-    def _load_metadata(self):
+    def _update_filter_values(self):
+        """Actualiza cmb_filter_value basándose en la selección de cmb_filter_field, 
+        obteniendo los valores únicos desde la DB."""
+
+        field_name = self.cmb_filter_field.currentData()
+        display_name = self.cmb_filter_field.currentText()
+
         try:
-            self.brands_map = {id_: name for id_,
-                               name in Brand.get_all_brands()}
-            self.categories_map = {id_: name for id_,
-                                   name in Category.get_all_categories()}
-            self.brands_name_map = {name: id_ for id_,
-                                    name in Brand.get_all_brands()}
-            self.categories_name_map = {
-                name: id_ for id_, name in Category.get_all_categories()}
+            unique_values = Item.get_unique_values_for_field(field_name)
         except Exception as e:
             print(
-                f"Advertencia: No se pudo cargar metadatos (Marcas/Categorías): {e}")
-            self.brands_map = {}
-            self.categories_map = {}
-            self.brands_name_map = {}
-            self.categories_name_map = {}
+                f"ERROR: No se pudieron obtener valores únicos para {field_name}: {e}")
+            unique_values = []
 
-    def _populate_comboboxes(self):
-
-        current_brand = self.cmb_brand.currentText()
-        self.cmb_brand.blockSignals(True)
-        self.cmb_brand.clear()
-        self.cmb_brand.addItem("Todas las Marcas", userData=None)
-
-        brand_names = sorted(self.brands_name_map.keys())
-        for name in brand_names:
-            self.cmb_brand.addItem(name, userData=self.brands_name_map[name])
-
-        index = self.cmb_brand.findText(current_brand)
-        if index != -1:
-            self.cmb_brand.setCurrentIndex(index)
-        self.cmb_brand.blockSignals(False)
-
-        current_category = self.cmb_category.currentText()
-        self.cmb_category.blockSignals(True)
-        self.cmb_category.clear()
-        self.cmb_category.addItem("Todas las Categorías", userData=None)
-
-        category_names = sorted(self.categories_name_map.keys())
-        for name in category_names:
-            self.cmb_category.addItem(
-                name, userData=self.categories_name_map[name])
-
-        index = self.cmb_category.findText(current_category)
-        if index != -1:
-            self.cmb_category.setCurrentIndex(index)
-        self.cmb_category.blockSignals(False)
+        self.cmb_filter_value.blockSignals(True)
+        self.cmb_filter_value.clear()
+        self.cmb_filter_value.addItem(f"Todas las {display_name}s")
+        self.cmb_filter_value.addItems(unique_values)
+        self.cmb_filter_value.blockSignals(False)
+        self.load_items_data()
 
     def _setup_table(self):
         headers = ["Nombre", "SKU", "Marca", "Categoría",
-                   "Tipo Empaque", "Mínimo", "Estado"]
+                   "Tipo Empaque", "Mínimo", "Stock Disp.", "Estado"]
         self.table_items.setColumnCount(len(headers))
         self.table_items.setHorizontalHeaderLabels(headers)
 
@@ -218,31 +204,28 @@ class view_item(QWidget):
         header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(6, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(7, QHeaderView.ResizeToContents)
 
         self.table_items.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table_items.setSelectionBehavior(QTableWidget.SelectRows)
 
-    def load_items_data(self, initial_load=False):
+    def load_items_data(self):
         try:
-            all_items_data = Item.get_all_items_data()
+            filter_field = self.cmb_filter_field.currentData()
+            selected_value = self.cmb_filter_value.currentText()
+            search_term = self.txt_search.text().strip()
 
-            if initial_load:
-                self._populate_comboboxes()
+            filter_value_for_db = None
+            if self.cmb_filter_value.currentIndex() != 0:
+                filter_value_for_db = selected_value
 
-            selected_brand_id = self.cmb_brand.currentData()
-            selected_category_id = self.cmb_category.currentData()
+            search_term_for_db = search_term if search_term else None
 
-            items_data_to_display = all_items_data
-
-            if selected_brand_id is not None:
-                items_data_to_display = [
-                    row for row in items_data_to_display if row[4] == selected_brand_id
-                ]
-
-            if selected_category_id is not None:
-                items_data_to_display = [
-                    row for row in items_data_to_display if row[6] == selected_category_id
-                ]
+            items_data_to_display = Item.get_items_for_display(
+                filter_field=filter_field,
+                filter_value=filter_value_for_db,
+                search_term=search_term_for_db
+            )
 
             self.table_items.setRowCount(0)
             self.item_ids = []
@@ -254,16 +237,12 @@ class view_item(QWidget):
 
             for row_idx, row_data in enumerate(items_data_to_display):
                 (
-                    id_item, name, sku, barcode, brand_id,
-                    description, category_id, pack_type, min_qty,
-                    active, created_at, updated_at
+                    id_item, name, sku, pack_type, min_qty,
+                    active, brand_name, category_name, total_stock
                 ) = row_data
 
                 self.item_ids.append(id_item)
 
-                brand_name = self.brands_map.get(brand_id, f"ID: {brand_id}")
-                category_name = self.categories_map.get(
-                    category_id, f"ID: {category_id}")
                 active_text = "Activo" if active else "Inactivo"
 
                 self.table_items.setItem(row_idx, 0, QTableWidgetItem(name))
@@ -286,9 +265,13 @@ class view_item(QWidget):
                 item_min_qty.setTextAlignment(Qt.AlignCenter)
                 self.table_items.setItem(row_idx, 5, item_min_qty)
 
+                item_stock = QTableWidgetItem(str(total_stock))
+                item_stock.setTextAlignment(Qt.AlignCenter)
+                self.table_items.setItem(row_idx, 6, item_stock)
+
                 item_active = QTableWidgetItem(active_text)
                 item_active.setTextAlignment(Qt.AlignCenter)
-                self.table_items.setItem(row_idx, 6, item_active)
+                self.table_items.setItem(row_idx, 7, item_active)
 
         except Exception as e:
             print(f"Error al cargar datos de ítems: {e}")
