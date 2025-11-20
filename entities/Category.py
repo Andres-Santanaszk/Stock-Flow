@@ -100,5 +100,19 @@ class Category:
             cur.close()
             conn.close()
 
+    @staticmethod
+    def get_all():
+        conn = get_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT id_category, name FROM categories") # Ajusta los campos
+        rows = cursor.fetchall()
+        conn.close()
+        
+        categories = []
+        for row in rows:
+            # Ajusta esto a los atributos reales de tu clase Category
+            categories.append(Category(id_category=row[0], name=row[1])) 
+        return categories
+
     def __repr__(self):
         return f"<Category name={self.name} id={self.id_category}>"

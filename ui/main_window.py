@@ -12,7 +12,7 @@ from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QFont, QIcon
 from PySide6.QtSvgWidgets import QSvgWidget
 
-
+from ui.forms.edit_form import UpdateHubWidget
 from ui.login_window import LoginWindow
 from ui.forms.register_hub import RegisterHubWidget
 from ui.forms.movement_form import MovementsWidget
@@ -299,6 +299,8 @@ class MainWindow(QMainWindow):
                 widget = RegisterHubWidget(self)
             elif key == "Movimientos de inventario": 
                 widget = MovementsWidget(self)
+            elif key == "Administrar inventario":
+                widget = UpdateHubWidget(self)
             else:
                 widget = PlaceholderWidget(title, self.current_user_role)
             self.view_widgets[key] = widget

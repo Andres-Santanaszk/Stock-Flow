@@ -64,3 +64,42 @@ class Location:
         finally:
             cur.close()
             conn.close()
+            
+    @staticmethod
+    def get_all():
+        sql = """
+        SELECT 
+            id_location, code, type, description, active 
+        FROM locations 
+        WHERE active = TRUE 
+        ORDER BY code;
+        """
+        conn = get_connection()
+        try:
+            cursor = conn.cursor()
+            cursor.execute(sql)
+            rows = cursor.fetchall()
+            
+            locations = []
+            for row in rows:
+                # row[0] = id_location
+                # row[1] = code
+                # row[2] = type
+                # row[3] = description
+                # row[4] = active
+                
+                # CORRECCIÓN: Inicializar la clase con los atributos correctos
+                locations.append(Location(
+                    id_location=row[0], 
+                    code=row[1], 
+                    type=row[2],
+                    description=row[3],
+                    active=row[4]
+                ))
+            return locations
+            
+        except Exception as e:
+            raise e
+        finally:
+            cursor.close()
+            conn.close()

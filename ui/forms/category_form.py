@@ -128,9 +128,10 @@ class CategoryFormWidget(QWidget):
         if not name or not cls_:
             QMessageBox.warning(self, "Faltan datos", "Nombre y Clase son obligatorios.")
             return
-
+        cat_id = getattr(self, "current_id", None)
         try:
             new_category = Category(
+                id_category=cat_id,
                 name=name,
                 class_=cls_, 
                 description=desc,

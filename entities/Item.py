@@ -307,7 +307,56 @@ class Item:
         finally:
             cur.close()
             conn.close() 
-   
+    
+    @staticmethod
+    def get_all():
+        conn = get_connection()
+        cursor = conn.cursor()
+        
+        # CONSULTA ACTUALIZADA SEGÚN TU IMAGEN:
+        # Pedimos explícitamente las columnas en el orden que queremos
+        sql = """
+            SELECT 
+                id_item,      -- row[0]
+                name,         -- row[1]
+                sku,          -- row[2] (Usaremos esto en lugar de serial/model)
+                barcode,      -- row[3]
+                description,  -- row[4]
+                brand_id,     -- row[5]
+                category_id,  -- row[6]
+                pack_type,    -- row[7]
+                min_qty,      -- row[8]
+                active        -- row[9]
+            FROM items 
+            ORDER BY id_item ASC
+        """
+        
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+        conn.close()
+        
+        items = []
+        for row in rows:
+            # IMPORTANTE: Tu constructor (__init__) en Item.py debe aceptar estos argumentos.
+            # Si tu clase Item todavía tiene 'serial_number' y 'model', 
+            # pásale el SKU y Barcode para que no falle.
+            
+            new_item = Item(
+                id_item=row[0],
+                name=row[1],
+                sku=row[2],       # Antes tenías serial_number
+                barcode=row[3],   # Antes tenías model (o viceversa)
+                description=row[4],
+                brand_id=row[5],
+                category_id=row[6],
+                pack_type=row[7],
+                min_qty=row[8],
+                active=row[9]
+            )
+            items.append(new_item)
+            
+        return items
+    
         
     def __repr__(self):
         return f"<Item name={self.name} sku={self.sku} id={self.id_item}>"

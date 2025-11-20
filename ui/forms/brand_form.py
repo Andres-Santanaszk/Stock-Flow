@@ -129,8 +129,10 @@ class BrandFormWidget(QWidget):
             QMessageBox.warning(self, "Faltan datos", "El nombre de la marca es obligatorio.")
             return
 
+        brand_id = getattr(self, "current_id", None)
         try:
             new_brand = Brand(
+                id_brand=brand_id,
                 name=name,
                 description=desc,
                 website=web,

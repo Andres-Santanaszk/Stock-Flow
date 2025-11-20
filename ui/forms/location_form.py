@@ -131,13 +131,13 @@ class LocationFormWidget(QWidget):
             QMessageBox.warning(self, "Faltan datos",
                                 "El Código y el Tipo de locación son obligatorios.")
             return
-
+        loc_id = getattr(self, "current_id", None)
         try:
             new_location = Location(
                 code,
                 tipe,
                 desc,
-                min_qty
+                True
             )
             new_id = new_location.add_location()
             QMessageBox.information(
@@ -150,7 +150,6 @@ class LocationFormWidget(QWidget):
     def _on_clear(self):
         self.txtCode.clear()
         self.txtDescription.clear()
-        self.spnMinQty.setValue(0)
 
         if self.cmbType.count() > 0:
             self.cmbType.setCurrentIndex(0)
