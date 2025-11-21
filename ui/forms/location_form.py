@@ -31,10 +31,6 @@ class LocationFormWidget(QWidget):
         for enum_val, es_val in LOCATION_TYPE_ES.items():
             self.cmbType.addItem(es_val, userData=enum_val)
 
-        self.spnMinQty = QSpinBox()
-        self.spnMinQty.setRange(0, 100)
-        self.spnMinQty.setValue(0)
-
         form_layout.addRow("Código:", self.txtCode)
         form_layout.addRow("Tipo:", self.cmbType)
         form_layout.addRow("Descripción:", self.txtDescription)
@@ -125,7 +121,6 @@ class LocationFormWidget(QWidget):
         code = self.txtCode.text().strip()
         tipe = self.cmbType.currentData()
         desc = self.txtDescription.toPlainText().strip() or None
-        min_qty = self.spnMinQty.value()
 
         if not code or not tipe:
             QMessageBox.warning(self, "Faltan datos",
