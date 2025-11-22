@@ -42,10 +42,15 @@ class MovementsWidget(QWidget):
 
 
         title = QLabel("Registro de Movimientos")
-        title.setFont(QFont("Segoe UI", 70, QFont.Bold))
-        title.setStyleSheet("color: #f7a51b; margin-bottom: 30px;")
+        title.setObjectName("TitleLabel")
         title.setAlignment(Qt.AlignCenter)
         form_layout.addWidget(title)
+        
+        subtitle = QLabel("Elija un tipo de movimiento y llene los datos requeridos")
+        subtitle.setObjectName("SubtitleLabel")
+        subtitle.setAlignment(Qt.AlignCenter)
+        subtitle.setStyleSheet("margin-bottom: 30px;")
+        form_layout.addWidget(subtitle)
 
         type_layout = QHBoxLayout()
         self.btn_in = self.create_type_button(MOV_TYPE_ES["IN"], "mdi.import", "#4CAF50", "#66BB6A")
@@ -66,7 +71,7 @@ class MovementsWidget(QWidget):
         grid.setVerticalSpacing(15)
         grid.setHorizontalSpacing(20)
 
-        lbl_item = QLabel("Item / SKU:")
+        lbl_item = QLabel("Ítem o SKU:")
         
         self.combo_item = QComboBox()
         self.combo_item.setEditable(True)
@@ -130,7 +135,7 @@ class MovementsWidget(QWidget):
 
         self.info_frame = QFrame()
         self.info_frame.setObjectName("InfoFrame")
-        self.info_frame.setFixedWidth(300)
+        self.info_frame.setFixedWidth(400)
         info_layout = QVBoxLayout(self.info_frame)
         
         info_title = QLabel("Detalles del Ítem")
@@ -360,7 +365,7 @@ class MovementsWidget(QWidget):
                 locs_html += f"<li style='margin-bottom:5px;'><b>{loc['code']}</b> <span style='color:#B0BEC5; font-size:14px;'>({loc['type']})</span>: <span style='color: #66BB6A; font-size: 18px;'><b>{loc['qty']}</b></span></li>"
             locs_html += "</ul>"
         else:
-            locs_html += "<div style='color: #90A4AE; font-style: italic; margin-top: 10px; font-size: 16px;'>No hay stock asignado.</div>"
+            locs_html += "<div style='color: #FFFFFF; font-style: italic; margin-top: 10px; font-size: 20px;'>No hay stock asignado.</div>"
         
         locs_html += "</div>"
 
@@ -461,7 +466,6 @@ class MovementsWidget(QWidget):
             final_from = origin_id
 
         elif mov_type == "ADJUST":
-            # 1. Validación de ORIGEN (Siempre estricta)
             if not origin_id:
                  QMessageBox.warning(self, "Faltan datos", "Para un Ajuste debe seleccionar el Origen.")
                  return
@@ -562,5 +566,15 @@ class MovementsWidget(QWidget):
             }
             #SubmitButton:pressed {
                 background-color: #f7a51b;
+            }
+            QLabel#TitleLabel {
+            font-size: 40px;       /* o 60, 80, lo que veas bien */
+            color: #f7a51b;
+            font-weight: bold;
+            }
+
+            QLabel#SubtitleLabel {
+                font-size: 24px;
+                color: #ffffff;
             }
         """)

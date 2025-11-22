@@ -15,6 +15,7 @@ from ui.login_window import LoginDialog
 from ui.forms.register_hub import RegisterHubWidget
 from ui.forms.movement_form import MovementsWidget
 from ui.utils.common_widgets import AnimatedButton
+from ui.forms.user_hub import UserHubWidget
 
 
 
@@ -242,7 +243,6 @@ class MainWindow(QMainWindow):
             
             "Movimientos de inventario": ("Movimientos", "Inventory", "mdi.swap-horizontal"),
             
-            
             "Inventory On Hand": ("Inventario", "Visibility", "mdi.cube-scan"),
             "Localización": ("Ubicaciones", "Visibility", "mdi.map-marker"),
             
@@ -302,6 +302,8 @@ class MainWindow(QMainWindow):
                 widget = RegisterHubWidget(self)
             elif key == "Movimientos de inventario": 
                 widget = MovementsWidget(self)
+            elif key == "Gestión de Roles":
+                widget = UserHubWidget(self)
             else:
                 widget = PlaceholderWidget(title, self.current_user_role)
             self.view_widgets[key] = widget

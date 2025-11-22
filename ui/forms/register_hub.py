@@ -89,7 +89,7 @@ class RegisterHubWidget(QWidget):
         
 
         button_layout = QHBoxLayout()
-        button_layout.setSpacing(40) # Espacio entre botones
+        button_layout.setSpacing(40) 
         button_layout.addWidget(self.btn_item)
         button_layout.addWidget(self.btn_brand)
         button_layout.addWidget(self.btn_category)
@@ -104,7 +104,7 @@ class RegisterHubWidget(QWidget):
         main_layout.addWidget(self.lbl_subtitle)
         
         main_layout.addStretch(1)
-        main_layout.addLayout(button_layout) # <-- Añade el layout horizontal
+        main_layout.addLayout(button_layout)
         main_layout.addStretch(1)
         
         main_layout.addWidget(self.btn_update_link)
@@ -115,17 +115,15 @@ class RegisterHubWidget(QWidget):
                 margin-bottom: 10px;
             }
             #HubSubtitle {
-                color: #FFFFFF; /* Un color gris más sutil */
-                margin-bottom: 20px; /* Para separarlo del 'stretch' */
+                color: #FFFFFF; 
+                margin-bottom: 20px; 
             }
             
             QToolButton {
-                /* --- MODIFICADO --- */
-                min-height: 260px;    /* <-- Aumentado de 190 */
-                min-width: 300px;     /* <-- Aumentado de 210 */
-                /* --- FIN MODIFICADO --- */
+                min-height: 260px; 
+                min-width: 300px; 
 
-                font: Segoe UI;
+                font-family: "Segoe UI";
                 font-size: 18px;      
                 font-weight: bold;
                 padding: 15px;      
@@ -142,7 +140,7 @@ class RegisterHubWidget(QWidget):
             #LinkButton {
                 background-color: transparent;
                 border: none;
-                color: #AAAAAA; /* Color de texto normal (sutil) */
+                color: #AAAAAA; 
                 font-size: 16px;
                 font-weight: bold;
                 padding: 10px;
@@ -150,7 +148,7 @@ class RegisterHubWidget(QWidget):
             }
             #LinkButton:hover {
                 text-decoration: underline;
-                color: #f7a51b; /* Color de tu título al pasar el mouse */
+                color: #f7a51b;
             }
         """)
 

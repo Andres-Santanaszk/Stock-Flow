@@ -109,7 +109,7 @@ BEGIN
        
     ELSIF NEW.from_location_id IS NOT NULL THEN
        NEW.qty := -NEW.qty;
-       
+      
     ELSIF NEW.to_location_id IS NOT NULL THEN
        NEW.qty := NEW.qty;
        

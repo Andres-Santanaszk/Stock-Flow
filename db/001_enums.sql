@@ -8,8 +8,8 @@ CREATE TYPE mov_reason AS ENUM (
 
 CREATE TYPE item_pack_type AS ENUM (
     'unit',        -- pieza suelta
-    'package',     -- paquete pequeño
-    'box',         -- caja o master pack
+    'package',     -- paquete
+    'box',         -- caja 
     'bottle',      -- botella o frasco
     'bag',         -- bolsa
     'roll',        -- rollo

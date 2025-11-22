@@ -25,7 +25,9 @@ CREATE TABLE IF NOT EXISTS users (
   role_id INT REFERENCES roles(id),
 
   CONSTRAINT chk_users_email_format
-    CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')
+    CHECK (email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$'),
+  CONSTRAINT chk_users_name_format
+    CHECK (full_name ~ '^[A-Za-zÁÉÍÓÚáéíóúÑñ ]+$')
 );
 
 CREATE INDEX IF NOT EXISTS ix_users_role_id ON users(role_id);

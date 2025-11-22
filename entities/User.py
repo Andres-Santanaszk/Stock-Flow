@@ -98,5 +98,99 @@ class User:
             cur.close()
             conn.close()
 
+    @staticmethod
+    def exists_email(email):
+        """
+        Verifica si un email ya existe en la base de datos.
+        Retorna True si existe, False si no.
+        """
+        sql = "SELECT COUNT(*) FROM users WHERE email = %s;"
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (email,))
+            
+            # Fetchone devuelve una tupla, ej: (1,) o (0,)
+            count = cur.fetchone()[0]
+            
+            return count > 0
+            
+        except Exception as e:
+            # Es buena práctica loggear el error, pero aquí lo propagamos
+            print(f"Error checking email: {e}") 
+            raise e
+        finally:
+            if cur: cur.close()
+            if conn: conn.close()
+
+    @staticmethod
+    def get_active_users():
+        """
+        Retorna usuarios activos haciendo JOIN con roles para obtener el nombre.
+        Columns: id_user, full_name, email, role_name
+        """
+        sql = """
+        SELECT 
+            u.id_user, 
+            u.full_name, 
+            u.email, 
+            r.name as role_name
+        FROM users u
+        LEFT JOIN roles r ON u.role_id = r.id
+        WHERE u.active = true 
+        ORDER BY u.id_user ASC;
+        """
+        
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql)
+            rows = cur.fetchall()
+            return rows
+        except Exception as e:
+            print(f"Error fetching users: {e}")
+            return []
+        finally:
+            cur.close()
+            conn.close()
+            
+    @staticmethod
+    def search_by_name(name_fragment):
+        """
+        Busca usuarios activos cuyo nombre coincida parcialmente con el fragmento.
+        Retorna: Lista de tuplas (id_user, full_name, email, role_name)
+        """
+        sql = """
+        SELECT 
+            u.id_user, 
+            u.full_name, 
+            u.email, 
+            r.name as role_name
+        FROM users u
+        LEFT JOIN roles r ON u.role_id = r.id
+        WHERE u.active = true
+          AND (%s = '' OR LOWER(u.full_name) LIKE LOWER(%s))
+        ORDER BY u.id_user ASC;
+        """
+        
+        # Si name_fragment es None, usamos cadena vacía para evitar errores
+        search_term = name_fragment if name_fragment else ""
+        pattern = f"%{search_term}%"
+        
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            # Pasamos search_term para la primera comprobación (%s = '')
+            # Y pattern para el LIKE (%s)
+            cur.execute(sql, (search_term, pattern))
+            rows = cur.fetchall()
+            return rows
+        except Exception as e:
+            print(f"Error searching users: {e}")
+            return []
+        finally:
+            cur.close()
+            conn.close()
+
     def __repr__(self):
         return f"<User id={self.id_user} email={self.email} role_id={self.role_id}>"
