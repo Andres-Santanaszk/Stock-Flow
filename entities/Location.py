@@ -48,6 +48,43 @@ class Location:
             cur.close()
             conn.close()
 
+    def update(self):
+        if self.id_location is None:
+            raise ValueError("No se puede actualizar una marca sin id_location.")
+
+        if self.code is None:
+            raise ValueError(
+                "El atributo 'code' no puede ser nulo para actualizar.")
+
+        sql = """
+        UPDATE locations
+           SET type = %s,
+               code = %s,
+               description = %s,
+               active = %s
+         WHERE id_location = %s;
+        """
+
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (
+                self.type,
+                self.code,
+                self.description,
+                self.active,
+                self.id_location
+            ))
+            conn.commit()
+            return self.id_location
+
+        except Exception as e:
+            conn.rollback()
+            raise e
+        finally:
+            cur.close()
+            conn.close()
+    
     @staticmethod
     def get_all_locations_for_combo():
         """
@@ -134,3 +171,34 @@ class Location:
         finally:
             cur.close()
             conn.close()
+
+    @staticmethod
+    def get_by_id(id_location):
+        sql = """
+        SELECT
+            id_location, type, code, description, active
+        FROM locations
+        WHERE id_location = %s;
+        """
+
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (id_location,))
+            row = cur.fetchone()
+            if not row:
+                return None
+
+            return Location(
+                id_location=row[0],
+                type=row[1],
+                code=row[2],
+                description=row[3],
+                active=row[4],
+            )
+        finally:
+            cur.close()
+            conn.close()
+            
+    def __repr__(self):
+        return f"<Location code={self.code} id={self.id_location}>"

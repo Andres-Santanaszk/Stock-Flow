@@ -1,133 +1,267 @@
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QLabel, QListWidget, 
-    QLineEdit, QPushButton, QHBoxLayout, QMessageBox
+    QWidget, QFormLayout, QLineEdit, QTextEdit, QPushButton,
+    QHBoxLayout, QVBoxLayout, QMessageBox, QLabel, QFrame,
+    QComboBox, QCompleter
 )
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QIcon, QFont
+from PySide6.QtCore import Qt
+from PySide6.QtGui import QFont
+from entities.Brand import Brand  # Asegúrate de tener esta clase
 
-# Asumimos que tienes tu lógica y el formulario de edición original
-from entities.Brand import Brand
-from ui.forms.brand_form import BrandFormWidget
-
-class UpdateBrandForm(QDialog):
+class UpdateBrandForm(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Gestor de Marcas")
-        self.resize(450, 600)
+
+        self.current_id_brand = None
+
+        # -------------------------------
+        # TÍTULO
+        # -------------------------------
+        title_label = QLabel("Actualizar Marca Existente")
+        title_label.setFont(QFont("Segoe UI", 20, QFont.Bold))
+        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setObjectName("FormTitle")
+
+        # -------------------------------
+        # FORMULARIO
+        # -------------------------------
+        form_layout = QFormLayout()
+        form_layout.setLabelAlignment(Qt.AlignRight)
+
+        # --- BUSCADOR DE MARCA (Estilo QCompleter avanzado) ---
+        self.combo_search = QComboBox()
+        self.combo_search.setEditable(True)
+        self.combo_search.setInsertPolicy(QComboBox.NoInsert)
+        self.combo_search.setPlaceholderText("Buscar marca por nombre...")
         
-        # Datos en memoria
-        self.all_brands = []
+        # Configuración del autocompletado "MatchContains"
+        completer = self.combo_search.completer()
+        completer.setFilterMode(Qt.MatchContains)
+        completer.setCompletionMode(QCompleter.PopupCompletion)
+        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        completer.activated.connect(self._on_completer_activated)
 
-        # --- UI SETUP ---
-        self.layout = QVBoxLayout(self)
-        self.layout.setSpacing(15)
-        self.layout.setContentsMargins(20, 20, 20, 20)
-
-        # Título
-        self.lbl_title = QLabel("Actualizar Marca")
-        self.lbl_title.setFont(QFont("Segoe UI", 22, QFont.Bold))
-        self.lbl_title.setAlignment(Qt.AlignCenter)
-        self.layout.addWidget(self.lbl_title)
-
-        # Buscador
-        self.txt_search = QLineEdit()
-        self.txt_search.setPlaceholderText("🔍 Buscar marca por nombre...")
-        self.txt_search.setClearButtonEnabled(True)
-        self.txt_search.textChanged.connect(self.filter_list)
-        self.layout.addWidget(self.txt_search)
-
-        # Lista
-        self.list_widget = QListWidget()
-        self.layout.addWidget(self.list_widget)
-
-        # Botones
-        btn_layout = QHBoxLayout()
-        self.btn_cancel = QPushButton("Cancelar")
-        self.btn_edit = QPushButton("Editar Seleccionada")
+        # CAMPOS DE DATOS
+        self.txtName = QLineEdit()
+        self.txtDesc = QTextEdit()
+        self.txtDesc.setFixedHeight(70)
+        self.txtWebsite = QLineEdit()
+        self.txtEmail = QLineEdit()
         
-        # Estilo especial al botón editar
-        self.btn_edit.setObjectName("BtnAction")
-        self.btn_edit.setCursor(Qt.PointingHandCursor)
-        
-        btn_layout.addWidget(self.btn_cancel)
-        btn_layout.addWidget(self.btn_edit)
-        self.layout.addLayout(btn_layout)
+        # AGREGAR AL LAYOUT
+        # (Opcional: Poner el buscador fuera de la tarjeta o dentro, aquí lo pongo primero)
+        form_layout.addRow("<b>Buscar Marca:</b>", self.combo_search)
+        form_layout.addRow("Nombre:", self.txtName)
+        form_layout.addRow("Descripción:", self.txtDesc)
+        form_layout.addRow("Sitio web:", self.txtWebsite)
+        form_layout.addRow("Email contacto:", self.txtEmail)
 
-        # --- ESTILOS (Dark Theme) ---
+        # -------------------------------
+        # TARJETA (CARD)
+        # -------------------------------
+        card_form = QFrame()
+        card_form.setObjectName("CardFrame")
+        card_layout = QVBoxLayout(card_form)
+        
+        card_title = QLabel("Datos de la Marca")
+        card_title.setObjectName("SectionTitle")
+        
+        card_layout.addWidget(card_title)
+        card_layout.addLayout(form_layout)
+        card_layout.addStretch()
+
+        # -------------------------------
+        # BOTONES
+        # -------------------------------
+        self.btnSave = QPushButton("Actualizar Marca")
+        self.btnSave.setObjectName("BtnSave")
+        
+        self.btnRestore = QPushButton("Restablecer")
+        self.btnRestore.setObjectName("BtnClear") # Usamos el mismo estilo gris
+
+        # LAYOUT BOTONES
+        btns_layout = QHBoxLayout()
+        btns_layout.addStretch(1)
+        btns_layout.addWidget(self.btnRestore, 1)
+        btns_layout.addWidget(self.btnSave, 2)
+
+        # -------------------------------
+        # LAYOUT PRINCIPAL
+        # -------------------------------
+        root_layout = QVBoxLayout(self)
+        root_layout.setContentsMargins(20, 20, 20, 20)
+        root_layout.setSpacing(15)
+        
+        root_layout.addWidget(title_label)
+        root_layout.addWidget(card_form)
+        root_layout.addStretch(1) 
+        root_layout.addLayout(btns_layout)
+
+        # ESTILOS Y CONEXIONES
+        self._apply_styles()
+        
+        self.combo_search.currentIndexChanged.connect(self._on_brand_selected)
+        self.btnSave.clicked.connect(self._on_save)
+        self.btnRestore.clicked.connect(self._restore_data)
+
+        # Cargar lista inicial
+        self.load_brands_list()
+
+    def _apply_styles(self):
         self.setStyleSheet("""
-            QDialog { background-color: #2b2b2b; color: white; }
-            QLabel { color: #f7a51b; }
-            QLineEdit { 
-                padding: 10px; border-radius: 5px; border: 1px solid #555; 
-                background-color: #3c3f41; color: white; font-size: 14px;
+            #FormTitle {
+                color: #f7a51b;
+                margin-bottom: 10px;
             }
-            QListWidget { 
-                background-color: #3c3f41; border: 1px solid #555; 
-                color: white; font-size: 14px; border-radius: 5px; outline: none;
+            #CardFrame {
+                background-color: #3C3F41;
+                border: 1px solid #555555;
+                border-radius: 10px;
+                padding: 15px;
             }
-            QListWidget::item { padding: 10px; }
-            QListWidget::item:selected { background-color: #3498db; color: white; }
-            QPushButton { 
-                padding: 10px 20px; border-radius: 5px; 
-                background-color: #555; color: white; font-weight: bold; border: none;
+            #SectionTitle {
+                font-size: 14px;
+                font-weight: bold;
+                color: #ECEFF1;
+                margin-bottom: 10px;
+                border-bottom: 1px solid #555555;
+                padding-bottom: 5px;
             }
-            QPushButton:hover { background-color: #666; }
-            QPushButton#BtnAction { background-color: #f7a51b; color: black; }
-            QPushButton#BtnAction:hover { background-color: #ffb84d; }
+            QLineEdit, QTextEdit, QComboBox {
+                padding: 11px;
+                border: 1px solid #5A5A5A;
+                border-radius: 5px;
+                background-color: #424242;
+                font-size: 14px;
+                color: white;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #424242;
+                selection-background-color: #f7a51b;
+                selection-color: #000;
+                border: 1px solid #5A5A5A;
+                color: white;
+            }
+            #BtnSave {
+                background-color: #f7a51b;
+                color: #000000;
+                font-weight: bold;
+                font-size: 15px;
+                padding: 10px 15px;
+                border-radius: 5px;
+            }
+            #BtnSave:hover {
+                background-color: #f7c774;
+            }
+            #BtnClear {
+                background-color: #555555;
+                color: #ECEFF1;
+                font-size: 15px;
+                padding: 10px 15px;
+                border-radius: 5px;
+            }
+            #BtnClear:hover {
+                background-color: #6A6A6A;
+            }
         """)
 
-        # --- CONEXIONES ---
-        self.btn_cancel.clicked.connect(self.close)
-        self.btn_edit.clicked.connect(self.open_editor)
-        self.list_widget.itemDoubleClicked.connect(self.open_editor)
-
-        # Cargar datos iniciales
-        self.load_data()
-
-    def load_data(self):
-        self.list_widget.clear()
+    # -------------------------------
+    # CARGA DE LISTA DE MARCAS
+    # -------------------------------
+    def load_brands_list(self):
+        """ Carga todas las marcas en el combo para buscar """
         try:
-            self.all_brands = Brand.get_all()
-            for brand in self.all_brands:
-                self.list_widget.addItem(brand.name)
+            # Asumo que tienes un método estático similar en tu clase Brand
+            # Si no, usa Brand.get_all() y itera
+            brands = Brand.get_all_brands() 
+            
+            self.combo_search.blockSignals(True)
+            self.combo_search.clear()
+            self.combo_search.addItem("Buscar marca...", userData=None)
+            
+            for row in brands:
+                # row suele ser (id_brand, name)
+                id_brand = row[0]
+                name = row[1]
+                self.combo_search.addItem(name, userData=id_brand)
+                
+            self.combo_search.blockSignals(False)
+            
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"No se pudieron cargar las marcas: {e}")
+            # Si falla porque no existe el método, intenta manejarlo o crea el método en Brand
+            print(f"Error cargando marcas: {e}")
 
-    def filter_list(self, text):
-        self.list_widget.clear()
-        text = text.lower()
-        for brand in self.all_brands:
-            if text in brand.name.lower():
-                self.list_widget.addItem(brand.name)
+    # -------------------------------
+    # LÓGICA DE SELECCIÓN
+    # -------------------------------
+    def _on_completer_activated(self, text):
+        if not text: return
+        index = self.combo_search.findText(text)
+        if index >= 0:
+            self.combo_search.setCurrentIndex(index)
 
-    def open_editor(self):
-        row = self.list_widget.currentRow()
-        if row < 0:
-            QMessageBox.warning(self, "Atención", "Debes seleccionar una marca de la lista.")
+    def _on_brand_selected(self, index):
+        brand_id = self.combo_search.itemData(index)
+        if not brand_id:
+            return
+        
+        self.current_id_brand = brand_id
+        self._load_brand_data()
+
+    def _load_brand_data(self):
+        if not self.current_id_brand:
+            return
+            
+        try:
+            # Asumimos método get_by_id en Brand
+            brand = Brand.get_by_id(self.current_id_brand)
+            if brand:
+                self.txtName.setText(brand.name)
+                self.txtDesc.setText(brand.description or "")
+                self.txtWebsite.setText(brand.website or "")
+                self.txtEmail.setText(brand.contact_email or "")
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo cargar la marca:\n{e}")
+
+    def _restore_data(self):
+        """ Vuelve a cargar los datos de la base de datos para la marca seleccionada """
+        self._load_brand_data()
+
+    # -------------------------------
+    # GUARDAR / ACTUALIZAR
+    # -------------------------------
+    def _on_save(self):
+        if not self.current_id_brand:
+            QMessageBox.warning(self, "Atención", "Primero debes buscar y seleccionar una marca.")
             return
 
-        # Buscar el objeto original basado en el texto seleccionado
-        selected_text = self.list_widget.currentItem().text()
-        brand_obj = next((b for b in self.all_brands if b.name == selected_text), None)
+        name = self.txtName.text().strip()
+        desc = self.txtDesc.toPlainText().strip() or None
+        web  = self.txtWebsite.text().strip() or None
+        mail = self.txtEmail.text().strip() or None
 
-        if brand_obj:
-            # Abrir formulario existente
-            dlg = QDialog(self)
-            form = BrandFormWidget(dlg)
-            
-            # RELLENAR DATOS (Ajusta según tus inputs reales)
-            # Asumo que tu form tiene inputs llamados line_name, etc.
-            if hasattr(form, 'line_name'): form.line_name.setText(brand_obj.name)
-            if hasattr(form, 'line_desc'): form.line_desc.setText(brand_obj.description or "")
-            if hasattr(form, 'line_web'): form.line_web.setText(brand_obj.website or "")
-            if hasattr(form, 'line_email'): form.line_email.setText(brand_obj.contact_email or "")
+        if not name:
+            QMessageBox.warning(self, "Faltan datos", "El nombre de la marca es obligatorio.")
+            return
 
-            # INYECTAR ID (Crucial para el UPDATE)
-            form.current_id = brand_obj.id_brand
+        try:
+            # Creamos objeto Brand con el ID existente
+            brand = Brand(
+                id_brand=self.current_id_brand,
+                name=name,
+                description=desc,
+                website=web,
+                contact_email=mail
+            )
             
-            lay = QVBoxLayout(dlg)
-            lay.addWidget(form)
-            dlg.setWindowTitle(f"Editando: {brand_obj.name}")
+            # LLAMADA A UPDATE (Asegúrate de tener este método en tu clase Brand)
+            brand.update() 
             
-            if dlg.exec():
-                self.load_data() # Recargar lista al volver
+            QMessageBox.information(self, "Éxito", "Marca actualizada correctamente.")
+            
+            # Opcional: Recargar la lista por si cambió el nombre
+            current_idx = self.combo_search.currentIndex()
+            self.load_brands_list()
+            self.combo_search.setCurrentIndex(current_idx)
+            
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo actualizar la marca:\n{e}")

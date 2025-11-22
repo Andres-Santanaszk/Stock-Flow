@@ -105,20 +105,6 @@ class Category:
             conn.close()
 
     @staticmethod
-<<<<<<< HEAD
-    def get_all():
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT id_category, name FROM categories") # Ajusta los campos
-        rows = cursor.fetchall()
-        conn.close()
-        
-        categories = []
-        for row in rows:
-            # Ajusta esto a los atributos reales de tu clase Category
-            categories.append(Category(id_category=row[0], name=row[1])) 
-        return categories
-=======
     def get_all_categories():
         """
         Recupera el ID y el nombre de todas las categorías (ideales para QComboBox).
@@ -142,7 +128,36 @@ class Category:
         finally:
             cur.close()
             conn.close()
->>>>>>> localizacion
+            
+    @staticmethod
+    def get_by_id(id_category):
+        sql = """
+        SELECT
+            id_category, name, class, description, active, created_at, updated_at
+        FROM categories
+        WHERE id_category = %s;
+        """
+
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (id_category,))
+            row = cur.fetchone()
+            if not row:
+                return None
+
+            return Category(
+                id_category=row[0],
+                name=row[1],
+                class_=row[2],
+                description=row[3],
+                active=row[4],
+                created_at=row[5],
+                updated_at=row[6]
+            )
+        finally:
+            cur.close()
+            conn.close()
 
     def __repr__(self):
         return f"<Category name={self.name} id={self.id_category}>"

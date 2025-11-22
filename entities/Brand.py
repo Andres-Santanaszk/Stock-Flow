@@ -85,22 +85,6 @@ class Brand:
             conn.close()
 
     @staticmethod
-<<<<<<< HEAD
-    def get_all():
-        conn = get_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM brands") # Trae todo
-        rows = cursor.fetchall()
-        conn.close()
-        
-        # Convertimos los resultados en una lista de objetos Brand
-        brands_list = []
-        for row in rows:
-            # Asumiendo que el orden en DB es id, name, desc, web, email, date
-            new_brand = Brand(id_brand=row[0], name=row[1], description=row[2], website=row[3], contact_email=row[4])
-            brands_list.append(new_brand)
-        return brands_list
-=======
     def get_all_brands():
         """
         Recupera el ID y el nombre de todas las marcas (ideales para QComboBox).
@@ -124,7 +108,35 @@ class Brand:
         finally:
             cur.close()
             conn.close()
->>>>>>> localizacion
 
+    @staticmethod
+    def get_by_id(id_brand):
+        sql = """
+        SELECT
+            id_brand, name, description, website, contact_email, created_at
+        FROM brands
+        WHERE id_brand = %s;
+        """
+
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (id_brand,))
+            row = cur.fetchone()
+            if not row:
+                return None
+
+            return Brand(
+                id_brand=row[0],
+                name=row[1],
+                description=row[2],
+                website=row[3],
+                contact_email=row[4],
+                created_at=row[5],
+            )
+        finally:
+            cur.close()
+            conn.close()
+    
     def __repr__(self):
         return f"<Brand name={self.name} id={self.id_brand}>"

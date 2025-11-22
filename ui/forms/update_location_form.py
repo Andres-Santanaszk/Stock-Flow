@@ -1,98 +1,261 @@
 from PySide6.QtWidgets import (
-    QDialog, QVBoxLayout, QLabel, QListWidget, 
-    QLineEdit, QPushButton, QHBoxLayout
+    QWidget, QFormLayout, QLineEdit, QTextEdit, QComboBox, 
+    QPushButton, QMessageBox, QHBoxLayout, QVBoxLayout,
+    QLabel, QFrame, QCompleter
 )
-from PySide6.QtGui import QFont
 from PySide6.QtCore import Qt
-
+from PySide6.QtGui import QFont
 from entities.Location import Location
-from ui.forms.location_form import LocationFormWidget
+from ui.translations import LOCATION_TYPE_ES
 
-class UpdateLocationForm(QDialog):
+class UpdateLocationForm(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Gestor de Locaciones")
-        self.resize(500, 550)
-        self.all_locs = []
 
-        self.layout = QVBoxLayout(self)
-        self.layout.setSpacing(15)
+        self.current_id_location = None
+
+        # -------------------------------
+        # TÍTULO
+        # -------------------------------
+        title_label = QLabel("Actualizar Localización")
+        title_label.setFont(QFont("Segoe UI", 20, QFont.Bold))
+        title_label.setAlignment(Qt.AlignCenter)
+        title_label.setObjectName("FormTitle")
+
+        # -------------------------------
+        # FORMULARIO
+        # -------------------------------
+        form_layout = QFormLayout()
+        form_layout.setLabelAlignment(Qt.AlignRight)
+
+        # --- BUSCADOR INTELIGENTE ---
+        self.combo_search = QComboBox()
+        self.combo_search.setEditable(True)
+        self.combo_search.setInsertPolicy(QComboBox.NoInsert)
+        self.combo_search.setPlaceholderText("Buscar por código...")
+
+        # Configuración del autocompletado
+        completer = self.combo_search.completer()
+        completer.setFilterMode(Qt.MatchContains)
+        completer.setCompletionMode(QCompleter.PopupCompletion)
+        completer.setCaseSensitivity(Qt.CaseInsensitive)
+        completer.activated.connect(self._on_completer_activated)
+
+        # --- CAMPOS DE DATOS ---
+        self.txtCode = QLineEdit()
         
-        # Header
-        self.lbl_title = QLabel("Actualizar Locación")
-        self.lbl_title.setFont(QFont("Segoe UI", 22, QFont.Bold))
-        self.lbl_title.setAlignment(Qt.AlignCenter)
-        self.layout.addWidget(self.lbl_title)
+        self.cmbType = QComboBox()
+        # Cargar tipos desde traducciones
+        for enum_val, es_val in LOCATION_TYPE_ES.items():
+            self.cmbType.addItem(es_val, userData=enum_val)
 
-        self.txt_search = QLineEdit()
-        self.txt_search.setPlaceholderText("🔍 Buscar por nombre o dirección...")
-        self.txt_search.textChanged.connect(self.filter_list)
-        self.layout.addWidget(self.txt_search)
+        self.txtDescription = QTextEdit()
+        self.txtDescription.setMinimumHeight(80)
 
-        self.list_widget = QListWidget()
-        self.layout.addWidget(self.list_widget)
+        # Agregar filas al formulario
+        form_layout.addRow("<b>Buscar:</b>", self.combo_search)
+        form_layout.addRow("Código:", self.txtCode)
+        form_layout.addRow("Tipo:", self.cmbType)
+        form_layout.addRow("Descripción:", self.txtDescription)
 
-        self.btn_edit = QPushButton("Editar Locación")
-        self.btn_edit.setObjectName("BtnAction")
-        self.btn_edit.setCursor(Qt.PointingHandCursor)
-        self.layout.addWidget(self.btn_edit)
+        # -------------------------------
+        # TARJETA (CARD)
+        # -------------------------------
+        card_form = QFrame()
+        card_form.setObjectName("CardFrame")
+        card_layout = QVBoxLayout(card_form)
 
-        # Estilos
+        card_title = QLabel("Datos de la Localización")
+        card_title.setObjectName("SectionTitle")
+
+        card_layout.addWidget(card_title)
+        card_layout.addLayout(form_layout)
+        card_layout.addStretch()
+
+        # -------------------------------
+        # BOTONES
+        # -------------------------------
+        self.btnSave = QPushButton("Actualizar Localización")
+        self.btnSave.setObjectName("BtnSave")
+
+        self.btnRestore = QPushButton("Restablecer")
+        self.btnRestore.setObjectName("BtnClear")
+
+        btns_layout = QHBoxLayout()
+        btns_layout.addStretch(1)
+        btns_layout.addWidget(self.btnRestore, 1)
+        btns_layout.addWidget(self.btnSave, 2)
+
+        # -------------------------------
+        # LAYOUT PRINCIPAL
+        # -------------------------------
+        root_layout = QVBoxLayout(self)
+        root_layout.setContentsMargins(20, 20, 20, 20)
+        root_layout.setSpacing(15)
+
+        root_layout.addWidget(title_label)
+        root_layout.addWidget(card_form)
+        root_layout.addStretch(1)
+        root_layout.addLayout(btns_layout)
+
+        # ESTILOS Y CONEXIONES
+        self._apply_styles()
+
+        self.combo_search.currentIndexChanged.connect(self._on_location_selected)
+        self.btnSave.clicked.connect(self._on_save)
+        self.btnRestore.clicked.connect(self._restore_data)
+
+        # Cargar datos iniciales
+        self.load_locations_list()
+
+    def _apply_styles(self):
         self.setStyleSheet("""
-            QDialog { background-color: #2b2b2b; }
-            QLabel { color: #f7a51b; }
-            QLineEdit, QListWidget { 
-                background-color: #3c3f41; border: 1px solid #555; color: white; padding: 5px; 
+            #FormTitle {
+                color: #f7a51b;
+                margin-bottom: 10px;
             }
-            QListWidget::item { padding: 8px; border-bottom: 1px solid #444; }
-            QListWidget::item:selected { background-color: #3498db; }
-            QPushButton#BtnAction { 
-                background-color: #f7a51b; color: black; font-weight: bold; 
-                padding: 12px; border-radius: 6px;
+            #CardFrame {
+                background-color: #3C3F41;
+                border: 1px solid #555555;
+                border-radius: 10px;
+                padding: 15px;
+            }
+            #SectionTitle {
+                font-size: 14px;
+                font-weight: bold;
+                color: #ECEFF1;
+                margin-bottom: 10px;
+                border-bottom: 1px solid #555555;
+                padding-bottom: 5px;
+            }
+            QLineEdit, QTextEdit, QComboBox, QSpinBox {
+                padding: 11px;
+                border: 1px solid #5A5A5A;
+                border-radius: 5px;
+                background-color: #424242;
+                font-size: 14px;
+                color: white;
+            }
+            QComboBox QAbstractItemView {
+                background-color: #424242;
+                selection-background-color: #f7a51b;
+                selection-color: #000;
+                border: 1px solid #5A5A5A;
+                color: white;
+            }
+            #BtnSave {
+                background-color: #f7a51b;
+                color: #000000;
+                font-weight: bold;
+                font-size: 15px;
+                padding: 10px 15px;
+                border-radius: 5px;
+            }
+            #BtnSave:hover {
+                background-color: #f7c774;
+            }
+            #BtnClear {
+                background-color: #555555;
+                color: #ECEFF1;
+                font-size: 15px;
+                padding: 10px 15px;
+                border-radius: 5px;
+            }
+            #BtnClear:hover {
+                background-color: #6A6A6A;
             }
         """)
 
-        self.btn_edit.clicked.connect(self.open_editor)
-        self.load_data()
-
-    def load_data(self):
-        self.list_widget.clear()
+    # -------------------------------
+    # LÓGICA DE CARGA
+    # -------------------------------
+    def load_locations_list(self):
         try:
-            self.all_locs = Location.get_all()
-            for l in self.all_locs:
-                # Mostramos info extra en la lista
-                display_text = f"{l.code}  |  {l.type}"
-                self.list_widget.addItem(display_text)
-        except: pass
+            # Necesitas este método en tu clase Location
+            locations = Location.get_all_locations_for_combo()
 
-    def filter_list(self, text):
-        self.list_widget.clear()
-        text = text.lower()
-        for l in self.all_locs:
-            full_text = f"{l.code} {l.type}".lower()
-            if text in full_text:
-                self.list_widget.addItem(f"{l.code}  |  {l.type}")
+            self.combo_search.blockSignals(True)
+            self.combo_search.clear()
+            self.combo_search.addItem("Buscar código...", userData=None)
 
-    def open_editor(self):
-        row = self.list_widget.currentRow()
-        if row < 0: return
+            for row in locations:
+                # row = (id_location, code)
+                # Mostramos el Código en el combo
+                self.combo_search.addItem(row[1], userData=row[0])
 
-        # Truco: Como filtramos, necesitamos encontrar el objeto correcto en la lista original
-        # Lo ideal es usar item.data() pero por simplicidad buscamos por índice filtrado
-        # NOTA: Si filtras, el indice cambia. Mejor buscamos por nombre parseando el string
-        selected_str = self.list_widget.currentItem().text()
-        name_part = selected_str.split("  |")[0].strip()
-        
-        obj = next((l for l in self.all_locs if l.name == name_part), None)
+            self.combo_search.blockSignals(False)
+        except Exception as e:
+            print(f"Error cargando localizaciones: {e}")
 
-        if obj:
-            dlg = QDialog(self)
-            form = LocationFormWidget(dlg)
-            if hasattr(form, 'line_name'): form.line_name.setText(obj.name)
-            if hasattr(form, 'line_address'): form.line_address.setText(obj.address)
-            form.current_id = obj.id_location
+    def _on_completer_activated(self, text):
+        if not text: return
+        index = self.combo_search.findText(text)
+        if index >= 0:
+            self.combo_search.setCurrentIndex(index)
+
+    def _on_location_selected(self, index):
+        loc_id = self.combo_search.itemData(index)
+        if not loc_id:
+            return
+        self.current_id_location = loc_id
+        self._load_location_data()
+
+    def _load_location_data(self):
+        if not self.current_id_location:
+            return
+        try:
+            # Necesitas este método en tu clase Location
+            loc = Location.get_by_id(self.current_id_location)
+            if loc:
+                self.txtCode.setText(loc.code)
+                self.txtDescription.setText(loc.description or "")
+
+                # Seleccionar el Tipo correcto
+                idx = self.cmbType.findData(loc.type)
+                if idx >= 0:
+                    self.cmbType.setCurrentIndex(idx)
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo cargar datos:\n{e}")
+
+    def _restore_data(self):
+        self._load_location_data()
+
+    # -------------------------------
+    # GUARDAR
+    # -------------------------------
+    def _on_save(self):
+        if not self.current_id_location:
+            QMessageBox.warning(self, "Atención", "Selecciona una localización primero.")
+            return
+
+        code = self.txtCode.text().strip()
+        tipe = self.cmbType.currentData()
+        desc = self.txtDescription.toPlainText().strip() or None
+
+        if not code or not tipe:
+            QMessageBox.warning(self, "Faltan datos", "El Código y el Tipo son obligatorios.")
+            return
+
+        try:
+            # Creamos objeto Location con el ID existente
+            location = Location(
+                id_location=self.current_id_location,
+                code=code,
+                type=tipe,
+                description=desc,
+                active=True
+            )
+
+            # Necesitas este método en tu clase Location
+            location.update()
+
+            QMessageBox.information(self, "Éxito", "Localización actualizada correctamente.")
             
-            lay = QVBoxLayout(dlg)
-            lay.addWidget(form)
-            if dlg.exec():
-                self.load_data()
+            # Recargar la lista (por si cambió el código)
+            current = self.combo_search.currentIndex()
+            self.load_locations_list()
+            self.combo_search.setCurrentIndex(current)
+
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"No se pudo actualizar:\n{e}")

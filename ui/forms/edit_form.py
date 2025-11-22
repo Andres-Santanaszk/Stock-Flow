@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QToolButton, QPushButton
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QToolButton, QPushButton, QDialog
 )
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIcon, QFont
@@ -7,9 +7,7 @@ from pathlib import Path
 
 from ui.utils.common_widgets import IconHoverAnimationMixin
 
-# --- CAMBIO 1: IMPORTAMOS LOS NUEVOS GESTORES (MANAGERS) ---
-# Asegúrate de que la ruta 'ui.views' sea correcta según tu estructura de carpetas.
-# Si están en la misma carpeta, úsalo sin 'ui.views'.
+
 from ui.forms.update_item_form import UpdateItemForm
 from ui.forms.update_brand_form import UpdateBrandForm
 from ui.forms.update_category_form import UpdateCategoryForm
@@ -140,38 +138,55 @@ class UpdateHubWidget(QWidget):
         """)
 
         # --- CAMBIO 2: CONEXIONES A LOS MÉTODOS ACTUALIZADOS ---
-        self.btn_item.clicked.connect(self._open_item_manager)
-        self.btn_brand.clicked.connect(self._open_brand_manager)
-        self.btn_category.clicked.connect(self._open_category_manager)
-        self.btn_location.clicked.connect(self._open_location_manager)
+        self.btn_item.clicked.connect(self._open_item_dialog)
+        self.btn_brand.clicked.connect(self._open_brand_dialog)
+        self.btn_category.clicked.connect(self._open_category_dialog)
+        self.btn_register_link.clicked.connect(self._open_update_view)
+        self.btn_location.clicked.connect(self._open_location_dialog)
         
-        self.btn_register_link.clicked.connect(self._open_register_view)
+        
 
     # --- CAMBIO 3: MÉTODOS SIMPLIFICADOS ---
     # Ya no configuramos el diálogo aquí. Simplemente abrimos la clase "Gestora"
     # que contiene la lista y la lógica.
     
-    def _open_item_manager(self):
-        # Abre la ventana con la lista de Items
-        manager = UpdateItemForm(self)
-        manager.exec()
+    def _open_item_dialog(self):
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Registrar ítem")
+        form = UpdateItemForm(dlg)
+        lay = QVBoxLayout(dlg)
+        lay.addWidget(form)
+        dlg.resize(850, 620)
+        dlg.exec()
 
-    def _open_brand_manager(self):
-        # Abre la ventana con la lista de Marcas
-        manager = UpdateBrandForm(self)
-        manager.exec()
+    def _open_brand_dialog(self):
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Registrar ítem")
+        form = UpdateBrandForm(dlg)
+        lay = QVBoxLayout(dlg)
+        lay.addWidget(form)
+        dlg.resize(850, 620)
+        dlg.exec()
+        
+    def _open_category_dialog(self):
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Registrar ítem")
+        form = UpdateCategoryForm(dlg)
+        lay = QVBoxLayout(dlg)
+        lay.addWidget(form)
+        dlg.resize(850, 620)
+        dlg.exec()
+        
+    def _open_location_dialog(self):
+        dlg = QDialog(self)
+        dlg.setWindowTitle("Registrar ítem")
+        form = UpdateLocationForm(dlg)
+        lay = QVBoxLayout(dlg)
+        lay.addWidget(form)
+        dlg.resize(850, 620)
+        dlg.exec()
 
-    def _open_category_manager(self):
-        # Abre la ventana con la lista de Categorías
-        manager = UpdateCategoryForm(self)
-        manager.exec()
-
-    def _open_location_manager(self):
-        # Abre la ventana con la lista de Locaciones
-        manager = UpdateLocationForm(self)
-        manager.exec()
-
-    def _open_register_view(self):
-        print("Volviendo a registro...")
+    def _open_update_view(self):
+        print("Botón de 'Actualizar' presionado. Abriendo otra vista...")
         # Aquí tu lógica para cambiar de pantalla en el MainWindow
         

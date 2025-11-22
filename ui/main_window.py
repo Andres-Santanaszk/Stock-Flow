@@ -246,7 +246,7 @@ class MainWindow(QMainWindow):
 
             "Historial de Movimientos": ("Historial transacciones", "history", "mdi.history"),
 
-            "Administrar inventario": ("Catálogos", "administration", "mdi.tag-outline")
+            "Administrar inventario": ("Actualizar inventario", "administration", "mdi.tag-outline")
         }
 
         self.buttons = {}
