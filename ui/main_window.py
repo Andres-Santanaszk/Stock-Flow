@@ -19,6 +19,7 @@ from ui.forms.movement_form import MovementsWidget
 from ui.utils.common_widgets import AnimatedButton
 from ui.view.location_view import view_location
 from ui.view.inventory_view import view_item
+from ui.view.movement_view import view_movement
 
 ROLES_PERMISSIONS = {
     "Administrador": ["Management", "Inventory", "Requests", "Visibility", "Dashboard", "management", "history", "administration", "register_item"],
@@ -304,6 +305,8 @@ class MainWindow(QMainWindow):
                 widget = view_location(self)
             elif key == "Inventory On Hand":
                 widget = view_item(self)
+            elif key == "Historial de Movimientos":
+                widget = view_movement(self)
             else:
                 widget = PlaceholderWidget(title, self.current_user_role)
             self.view_widgets[key] = widget

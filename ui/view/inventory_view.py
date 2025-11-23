@@ -1,273 +1,420 @@
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QDialog,
-    QLabel, QToolButton, QPushButton, QTableWidget, QTableWidgetItem, QHeaderView,
-    QComboBox, QLineEdit
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QToolButton,
+    QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView,
+    QFrame, QStyledItemDelegate, QStyle, QFormLayout, QLineEdit, QComboBox,
+    QScrollArea
 )
-from PySide6.QtCore import Qt, QSize
-from PySide6.QtGui import QIcon, QFont
+from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, QRect
+from PySide6.QtGui import QIcon, QColor
 from pathlib import Path
+import qtawesome as qta
 
-from ui.forms.item_form import ItemFormWidget
-from ui.forms.brand_form import BrandFormWidget
-from ui.forms.category_form import CategoryFormWidget
-from ui.forms.location_form import LocationFormWidget
-from ui.utils.common_widgets import IconHoverAnimationMixin
 from entities.Item import Item
-from entities.Brand import Brand
-from entities.Category import Category
-from entities.Location import Location
-
-BASE_DIR = Path(__file__).resolve().parents[1]
+from entities.ItemLocation import ItemLocation
+from entities.Movement import Movement
+from ui.translations import MOV_TYPE_ES, MOV_REASON_ES
 
 
-class AnimatedHubButton(IconHoverAnimationMixin, QToolButton):
-    def __init__(
-        self,
-        text,
-        icon_path,
-        fallback_name,
-        parent=None,
-        base_icon_size=QSize(150, 150),
-        hover_icon_size=QSize(170, 170),
-    ):
+class IDHighlighterDelegate(QStyledItemDelegate):
+    def paint(self, painter, option, index):
+        super().paint(painter, option, index)
+        target_col = 1
+        if (option.state & QStyle.State_Selected) and index.column() == target_col:
+            painter.save()
+            color = QColor("#f7a51b")
+            width = 6
+            rect = option.rect
+            bar_rect = QRect(rect.left(), rect.top(), width, rect.height())
+            painter.fillRect(bar_rect, color)
+            painter.restore()
+
+
+class ItemDetailPanel(QFrame):
+    def __init__(self, parent=None):
         super().__init__(parent)
+        self.setObjectName("DetailPanel")
+        self.setFixedWidth(380)
 
-        self.setText(text)
-        self.setCursor(Qt.PointingHandCursor)
-        self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
+        self.scroll_area = QScrollArea()
+        self.scroll_area.setWidgetResizable(True)
+        self.scroll_area.setFrameShape(QFrame.NoFrame)
+        self.scroll_area.setStyleSheet("background: transparent;")
 
-        icon = QIcon()
-        if icon_path.exists():
-            icon.addFile(str(icon_path))
+        self.content_widget = QWidget()
+        self.layout = QVBoxLayout(self.content_widget)
+        self.layout.setContentsMargins(20, 20, 20, 20)
+        self.layout.setSpacing(10)
+
+        lbl_header = QLabel("Detalles del Ítem")
+        lbl_header.setObjectName("PanelHeader")
+        self.layout.addWidget(lbl_header)
+
+        line = QFrame()
+        line.setFrameShape(QFrame.HLine)
+        line.setFrameShadow(QFrame.Plain)
+        line.setObjectName("PanelLine")
+        self.layout.addWidget(line)
+
+        self.lbl_name = QLabel()
+        self.lbl_name.setObjectName("PanelName")
+        self.lbl_name.setWordWrap(True)
+        self.layout.addWidget(self.lbl_name)
+
+        self.lbl_sku = QLabel()
+        self.lbl_sku.setObjectName("PanelEmail")
+        self.layout.addWidget(self.lbl_sku)
+
+        self.layout.addSpacing(10)
+
+        info_layout = QFormLayout()
+        info_layout.setHorizontalSpacing(15)
+        info_layout.setVerticalSpacing(5)
+
+        self.lbl_brand = QLabel("-")
+        self.lbl_category = QLabel("-")
+        self.lbl_min = QLabel("-")
+
+        for lbl in [self.lbl_brand, self.lbl_category, self.lbl_min]:
+            lbl.setObjectName("PanelValue")
+            lbl.setAlignment(Qt.AlignRight)
+
+        def create_row(label, widget):
+            l = QLabel(label)
+            l.setObjectName("PanelLabel")
+            info_layout.addRow(l, widget)
+
+        create_row("Marca:", self.lbl_brand)
+        create_row("Categoría:", self.lbl_category)
+        create_row("Min. Stock:", self.lbl_min)
+
+        self.layout.addLayout(info_layout)
+        self.layout.addSpacing(15)
+
+        self.lbl_stock_total = QLabel("Total: -")
+        self.lbl_stock_total.setObjectName("PanelStatus")
+        self.lbl_stock_total.setAlignment(Qt.AlignCenter)
+        self.layout.addWidget(self.lbl_stock_total)
+
+        self.layout.addSpacing(15)
+
+        lbl_locs = QLabel("📍 Ubicaciones Actuales")
+        lbl_locs.setStyleSheet(
+            "color: #f7a51b; font-weight: bold; font-size: 14px; margin-top: 10px;")
+        self.layout.addWidget(lbl_locs)
+
+        self.lbl_locations_detail = QLabel("Sin datos.")
+        self.lbl_locations_detail.setWordWrap(True)
+        self.lbl_locations_detail.setStyleSheet(
+            "color: #ddd; font-size: 13px; margin-left: 10px;")
+        self.layout.addWidget(self.lbl_locations_detail)
+
+        self.layout.addSpacing(10)
+        lbl_movs = QLabel("🕒 Últimos 2 Movimientos")
+        lbl_movs.setStyleSheet(
+            "color: #f7a51b; font-weight: bold; font-size: 14px; margin-top: 10px;")
+        self.layout.addWidget(lbl_movs)
+
+        self.lbl_last_moves = QLabel("Sin movimientos recientes.")
+        self.lbl_last_moves.setWordWrap(True)
+        self.lbl_last_moves.setStyleSheet(
+            "color: #ddd; font-size: 13px; margin-left: 10px;")
+        self.layout.addWidget(self.lbl_last_moves)
+
+        self.layout.addStretch()
+
+        self.scroll_area.setWidget(self.content_widget)
+
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(0, 0, 0, 0)
+        main_layout.addWidget(self.scroll_area)
+
+        self.reset_panel()
+
+    def reset_panel(self):
+        self.lbl_name.setText("Seleccione un ítem...")
+        self.lbl_name.setStyleSheet("color: #777;")
+        self.lbl_sku.setText("")
+        self.lbl_brand.setText("-")
+        self.lbl_category.setText("-")
+        self.lbl_min.setText("-")
+        self.lbl_stock_total.setText("")
+        self.lbl_locations_detail.setText("-")
+        self.lbl_last_moves.setText("-")
+
+    def update_data(self, item_id):
+        details = Item.get_details_for_panel(item_id)
+        total_stock = Item.get_total_stock(item_id)
+
+        if details:
+            self.lbl_name.setText(details['name'])
+            self.lbl_name.setStyleSheet("color: #f7a51b;")
+            self.lbl_sku.setText(f"SKU: {details['sku']}")
+            self.lbl_brand.setText(details['brand_name'])
+            self.lbl_category.setText(details['category_name'])
+            self.lbl_min.setText(str(details['min']))
+
+            self.lbl_stock_total.setText(f"{total_stock} unidades.")
+            if total_stock <= details['min']:
+                self.lbl_stock_total.setStyleSheet(
+                    "color: #EF5350; font-size: 22px; font-weight: bold;")
+            else:
+                self.lbl_stock_total.setStyleSheet(
+                    "color: #28a745; font-size: 22px; font-weight: bold;")
+
+        locs = ItemLocation.list_by_item(item_id)
+        if locs:
+            html_locs = ""
+            for l in locs:
+                html_locs += f"• <b>{l['code']}</b>: <span style='color:#fff'>{l['qty']}</span> <i style='color:#aaa'>({l['type']})</i><br>"
+            self.lbl_locations_detail.setText(html_locs)
+            self.lbl_locations_detail.setTextFormat(Qt.RichText)
         else:
-            icon = QIcon.fromTheme(fallback_name)
-        self.setIcon(icon)
+            self.lbl_locations_detail.setText("No hay stock asignado.")
 
-        self._setup_icon_hover_animation(
-            base_icon_size=base_icon_size,
-            hover_icon_size=hover_icon_size,
-        )
+        moves = Movement.get_last_movements_by_item(item_id, limit=2)
+        if moves:
+            html_movs = ""
+            for m in moves:
+                m_type = MOV_TYPE_ES.get(m[0], m[0])
+                m_reason = MOV_REASON_ES.get(m[1], m[1])
+                qty = m[2]
+                date_str = m[3].strftime("%d/%m %H:%M")
+                from_c = m[4]
+                to_c = m[5]
+
+                color = "#28a745" if m[0] == "IN" else "#EF5350"
+
+                route = ""
+                if m[0] == "IN":
+                    route = f"➜ {to_c}"
+                elif m[0] == "OUT":
+                    route = f"De {from_c} ➜ Fuera"
+                elif m[0] == "ADJUST":
+                    route = f"En {from_c or to_c}"
+                else:
+                    route = f"{from_c} ➜ {to_c}"
+
+                html_movs += f"""
+                <div style='margin-bottom: 8px;'>
+                    <span style='color:{color}; font-weight:bold;'>{m_type} ({m_reason})</span>
+                    <span style='color:#fff; float:right;'>Cant: {qty}</span><br>
+                    <span style='color:#aaa; font-size:11px;'>{date_str} | {route}</span>
+                </div>
+                """
+            self.lbl_last_moves.setText(html_movs)
+            self.lbl_last_moves.setTextFormat(Qt.RichText)
+        else:
+            self.lbl_last_moves.setText("Sin historial reciente.")
 
 
 class view_item(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.lbl_title = QLabel("Inventario de Ítems")
-        self.lbl_title.setFont(QFont("Segoe UI", 48, QFont.Bold))
-        self.lbl_title.setAlignment(Qt.AlignCenter)
-        self.lbl_title.setObjectName("HubTitle")
-
-        self.lbl_subtitle = QLabel("Catálogo de productos")
-        self.lbl_subtitle.setFont(QFont("Segoe UI", 18))
-        self.lbl_subtitle.setAlignment(Qt.AlignCenter)
-        self.lbl_subtitle.setObjectName("HubSubtitle")
-        self.btn_update_link = QPushButton(
-            "actualizar tabla"
-        )
-        self.btn_update_link.setObjectName("LinkButton")
-        self.btn_update_link.setCursor(Qt.PointingHandCursor)
-        self.btn_update_link.clicked.connect(self.load_items_data)
-
-        self.cmb_filter_field = QComboBox()
-        self.cmb_filter_field.addItem("Marca", userData="brand")
-        self.cmb_filter_field.addItem("Categoría", userData="category")
-        self.cmb_filter_field.addItem("SKU", userData="sku")
-        self.cmb_filter_field.setFixedWidth(120)
-        self.cmb_filter_field.currentIndexChanged.connect(
-            self._update_filter_values)
-
-        self.cmb_filter_value = QComboBox()
-        self.cmb_filter_value.setFixedWidth(200)
-        self.cmb_filter_value.currentIndexChanged.connect(
-            self.load_items_data)
+        self.lbl_title = QLabel("inventario")
+        self.lbl_title.setObjectName("MainTitle")
 
         self.txt_search = QLineEdit()
-        self.txt_search.setPlaceholderText(
-            "Buscar por Nombre o SKU")
+        self.txt_search.setPlaceholderText("Buscar por Nombre o SKU...")
+        self.txt_search.setObjectName("SearchInput")
         self.txt_search.setClearButtonEnabled(True)
-        self.txt_search.setFixedWidth(400)
+        self.txt_search.addAction(
+            qta.icon('fa5s.search', color='#aaaaaa'), QLineEdit.LeadingPosition)
         self.txt_search.textChanged.connect(self.load_items_data)
 
+        self.cmb_brand_filter = QComboBox()
+        self.cmb_brand_filter.setPlaceholderText("Todas las marcas")
+        self.cmb_brand_filter.addItem("Todas las marcas", userData=None)
+        self._load_brands()
+        self.cmb_brand_filter.currentIndexChanged.connect(self.load_items_data)
+
+        self.cmb_cat_filter = QComboBox()
+        self.cmb_cat_filter.setPlaceholderText("Todas las categorías")
+        self.cmb_cat_filter.addItem("Todas las categorías", userData=None)
+        self._load_categories()
+        self.cmb_cat_filter.currentIndexChanged.connect(self.load_items_data)
+
+        controls_layout = QHBoxLayout()
+        controls_layout.addWidget(self.txt_search, 2)
+        controls_layout.addWidget(self.cmb_brand_filter, 1)
+        controls_layout.addWidget(self.cmb_cat_filter, 1)
+        controls_layout.addStretch()
+
+        body_layout = QHBoxLayout()
+        body_layout.setSpacing(20)
+
+        self.table_frame = QFrame()
+        self.table_frame.setObjectName("TableContainer")
+
         self.table_items = QTableWidget()
-        self._setup_table()
-
-        main_layout = QVBoxLayout()
-        filter_layout = QHBoxLayout()
-        search_layout = QHBoxLayout()
-
-        filter_layout.addWidget(QLabel("Filtrar por:"))
-        filter_layout.addWidget(self.cmb_filter_field)
-        filter_layout.addWidget(self.cmb_filter_value)
-        filter_layout.addStretch(1)
-
-        search_layout.addWidget(QLabel("Búsqueda:"))
-        search_layout.addWidget(self.txt_search)
-        search_layout.addStretch(1)
-
-        main_layout.addWidget(self.lbl_title)
-        main_layout.addWidget(self.lbl_subtitle)
-
-        main_layout.addLayout(filter_layout)
-        main_layout.addLayout(search_layout)
-        main_layout.addWidget(self.table_items, 12)
-
-        main_layout.addStretch(1)
-        main_layout.addWidget(self.btn_update_link)
-
-        self.setLayout(main_layout)
-
-        self.setStyleSheet("""
-            #HubTitle {
-                font-size: 28px;
-                color: #f7a51b;
-                margin-bottom: 10px;
-            }
-            #HubSubtitle {
-                color: #FFFFFF;
-                margin-bottom: 20px;
-            }
-            QToolButton {
-                min-height: 260px;
-                min-width: 300px;
-                font: Segoe UI;
-                font-size: 18px;
-                font-weight: bold;
-                padding: 15px;
-                border-radius: 8px;
-                background-color: #3C3F41;
-                border: 1px solid #555555;
-            }
-            QToolButton:hover {
-                background-color: #f7c774;
-                color: black;
-                border: 1px solid #f7a51b;
-            }
-            #LinkButton {
-                background-color: transparent;
-                border: none;
-                color: #AAAAAA;
-                font-size: 16px;
-                font-weight: bold;
-                padding: 10px;
-                text-align: center;
-            }
-            #LinkButton:hover {
-                text-decoration: underline;
-                color: #f7a51b;
-            }
-            QComboBox, QLineEdit {
-                padding: 5px;
-                border-radius: 4px;
-                background-color: #3C3F41;
-                border: 1px solid #555555;
-                color: white;
-            }
-            QLabel {
-                color: #FFFFFF;
-                font-size: 14px;
-            }
-        """)
-        self._update_filter_values()
-
-    def _update_filter_values(self):
-        """Actualiza cmb_filter_value basándose en la selección de cmb_filter_field, 
-        obteniendo los valores únicos desde la DB."""
-
-        field_name = self.cmb_filter_field.currentData()
-        display_name = self.cmb_filter_field.currentText()
-
-        try:
-            unique_values = Item.get_unique_values_for_field(field_name)
-        except Exception as e:
-            print(
-                f"ERROR: No se pudieron obtener valores únicos para {field_name}: {e}")
-            unique_values = []
-
-        self.cmb_filter_value.blockSignals(True)
-        self.cmb_filter_value.clear()
-        self.cmb_filter_value.addItem(f"Todas las {display_name}s")
-        self.cmb_filter_value.addItems(unique_values)
-        self.cmb_filter_value.blockSignals(False)
-        self.load_items_data()
-
-    def _setup_table(self):
-        headers = ["Nombre", "SKU", "Marca", "Categoría",
-                   "Tipo Empaque", "Mínimo", "Stock Disp."]
-        self.table_items.setColumnCount(len(headers))
-        self.table_items.setHorizontalHeaderLabels(headers)
+        self.table_items.setColumnCount(5)
+        self.table_items.setHorizontalHeaderLabels(
+            ["ID", "NOMBRE", "SKU", "MARCA", "STOCK"])
 
         header = self.table_items.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.Stretch)
-        header.setSectionResizeMode(1, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(2, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(3, QHeaderView.ResizeToContents)
+        header.setSectionResizeMode(QHeaderView.Stretch)
+        header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(6, QHeaderView.ResizeToContents)
+        header.setDefaultAlignment(Qt.AlignLeft | Qt.AlignVCenter)
 
-        self.table_items.setEditTriggers(QTableWidget.NoEditTriggers)
-        self.table_items.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table_items.verticalHeader().setDefaultSectionSize(45)
+        self.table_items.setSelectionBehavior(QAbstractItemView.SelectRows)
+        self.table_items.setSelectionMode(QAbstractItemView.SingleSelection)
+        self.table_items.setEditTriggers(QAbstractItemView.NoEditTriggers)
+        self.table_items.setFocusPolicy(Qt.NoFocus)
+        self.table_items.setShowGrid(False)
+        self.table_items.verticalHeader().setVisible(False)
+        self.table_items.setColumnHidden(0, True)
+
+        self.delegate = IDHighlighterDelegate(self.table_items)
+        self.table_items.setItemDelegate(self.delegate)
+        self.table_items.itemSelectionChanged.connect(
+            self._on_selection_changed)
+
+        t_lay = QVBoxLayout(self.table_frame)
+        t_lay.setContentsMargins(2, 2, 2, 2)
+        t_lay.addWidget(self.table_items)
+
+        self.detail_panel = ItemDetailPanel()
+
+        body_layout.addWidget(self.table_frame, stretch=1)
+        body_layout.addWidget(self.detail_panel)
+        main_layout = QVBoxLayout(self)
+        main_layout.setContentsMargins(40, 10, 40, 40)
+
+        main_layout.addWidget(self.lbl_title)
+        main_layout.addSpacing(20)
+        main_layout.addLayout(controls_layout)
+        main_layout.addSpacing(15)
+        main_layout.addLayout(body_layout)
+
+        self._apply_styles()
+
+    def showEvent(self, event):
+        """Se ejecuta automáticamente al mostrar la pestaña, actualizando la tabla."""
+        super().showEvent(event)
+        self.load_items_data()
+
+    def _load_brands(self):
+        try:
+            brands = Item.get_all_brands_for_combo()
+            for b_id, name in brands:
+                self.cmb_brand_filter.addItem(name, userData=name)
+        except:
+            pass
+
+    def _load_categories(self):
+        try:
+            cats = Item.get_all_categories_for_combo()
+            for c_id, name in cats:
+                self.cmb_cat_filter.addItem(name, userData=name)
+        except:
+            pass
 
     def load_items_data(self):
         try:
-            filter_field = self.cmb_filter_field.currentData()
-            selected_value = self.cmb_filter_value.currentText()
-            search_term = self.txt_search.text().strip()
+            search = self.txt_search.text().strip()
+            brand_val = self.cmb_brand_filter.currentData()
+            cat_val = self.cmb_cat_filter.currentData()
 
-            filter_value_for_db = None
-            if self.cmb_filter_value.currentIndex() != 0:
-                filter_value_for_db = selected_value
+            filter_f = None
+            filter_v = None
+            if brand_val:
+                filter_f = 'brand'
+                filter_v = brand_val
+            elif cat_val:
+                filter_f = 'category'
+                filter_v = cat_val
 
-            search_term_for_db = search_term if search_term else None
-
-            items_data_to_display = Item.get_items_for_display(
-                filter_field=filter_field,
-                filter_value=filter_value_for_db,
-                search_term=search_term_for_db
+            items = Item.get_items_for_display(
+                filter_field=filter_f,
+                filter_value=filter_v,
+                search_term=search
             )
 
+            current_row = self.table_items.currentRow()
+            selected_id = None
+            if current_row >= 0:
+                selected_id = self.table_items.item(current_row, 0).text()
+
             self.table_items.setRowCount(0)
-            self.item_ids = []
+            self.detail_panel.reset_panel()
 
-            if not items_data_to_display:
-                return
+            for row_idx, row_data in enumerate(items):
+                (id_item, name, sku, _, _, _, brand_name, _, stock) = row_data
 
-            self.table_items.setRowCount(len(items_data_to_display))
+                self.table_items.insertRow(row_idx)
 
-            for row_idx, row_data in enumerate(items_data_to_display):
-                (
-                    id_item, name, sku, pack_type, min_qty,
-                    active, brand_name, category_name, total_stock
-                ) = row_data
+                item_id = QTableWidgetItem(str(id_item))
+                item_id.setTextAlignment(Qt.AlignCenter)
+                self.table_items.setItem(row_idx, 0, item_id)
 
-                self.item_ids.append(id_item)
-
-                self.table_items.setItem(row_idx, 0, QTableWidgetItem(name))
-
-                item_sku = QTableWidgetItem(sku)
-                item_sku.setTextAlignment(Qt.AlignCenter)
-                self.table_items.setItem(row_idx, 1, item_sku)
-
+                self.table_items.setItem(row_idx, 1, QTableWidgetItem(name))
+                self.table_items.setItem(row_idx, 2, QTableWidgetItem(sku))
                 self.table_items.setItem(
-                    row_idx, 2, QTableWidgetItem(brand_name))
+                    row_idx, 3, QTableWidgetItem(brand_name))
 
-                self.table_items.setItem(
-                    row_idx, 3, QTableWidgetItem(category_name))
-
-                item_pack = QTableWidgetItem(pack_type)
-                item_pack.setTextAlignment(Qt.AlignCenter)
-                self.table_items.setItem(row_idx, 4, item_pack)
-
-                item_min_qty = QTableWidgetItem(str(min_qty))
-                item_min_qty.setTextAlignment(Qt.AlignCenter)
-                self.table_items.setItem(row_idx, 5, item_min_qty)
-
-                item_stock = QTableWidgetItem(str(total_stock))
+                item_stock = QTableWidgetItem(str(stock))
                 item_stock.setTextAlignment(Qt.AlignCenter)
-                self.table_items.setItem(row_idx, 6, item_stock)
+                self.table_items.setItem(row_idx, 4, item_stock)
+
+                if selected_id and str(id_item) == selected_id:
+                    self.table_items.selectRow(row_idx)
 
         except Exception as e:
-            print(f"Error al cargar datos de ítems: {e}")
-            self.lbl_subtitle.setText(f"ERROR al cargar datos: {e}")
-            self.lbl_subtitle.setStyleSheet("#HubSubtitle { color: red; }")
+            print(f"Error loading items: {e}")
+
+    def _on_selection_changed(self):
+        selected = self.table_items.selectedItems()
+        if not selected:
+            self.detail_panel.reset_panel()
+            return
+
+        row = selected[0].row()
+        id_item = int(self.table_items.item(row, 0).text())
+        self.detail_panel.update_data(id_item)
+
+    def _apply_styles(self):
+        self.setStyleSheet("""
+            QWidget { font-family: "Segoe UI"; }
+            
+            #MainTitle { color: #f7a51b; font-size: 54px; font-weight: 800; margin-left: -15px; }
+            #SubTitle { color: #FFFFFF; font-size: 24px; font-weight: 600; }
+            
+            #SearchInput, QComboBox {
+                background-color: #3c3f41;
+                border: 2px solid #444444;
+                border-radius: 8px;
+                padding: 5px 15px; 
+                color: #ffffff;
+                font-size: 14px;
+                font-weight: bold;
+                height: 35px;
+            }
+            #SearchInput:focus, QComboBox:focus { border: 2px solid #f7a51b; }
+
+            #TableContainer { background-color: #3c3f41; border: 1px solid #555; border-radius: 10px; }
+            QTableWidget { background-color: #3c3f41; border: none; color: #ffffff; font-size: 15px; font-weight: 500; }
+            QHeaderView::section {
+                background-color: #3c3f41; color: #f7a51b; font-weight: 800;
+                font-size: 13px; text-transform: uppercase; border: none;
+                border-bottom: 2px solid #555; padding: 8px;
+            }
+            QTableWidget::item { padding-left: 10px; border-bottom: 1px solid #444; }
+            QTableWidget::item:selected { background-color: #454545; color: #f7a51b; }
+
+            #DetailPanel { background-color: #3c3f41; border: 1px solid #555555; border-radius: 8px; }
+            #DetailPanel QLabel { background-color: transparent; }
+            #PanelHeader { color: #FFFFFF; font-size: 18px; font-weight: bold; }
+            #PanelLine { border: none; background-color: #FFFFFF; max-height: 1px; height: 1px; }
+            #PanelName { font-size: 22px; font-weight: 800; color: #f7a51b; }
+            #PanelEmail { color: #ccc; font-size: 14px; font-weight: 600; }
+            #PanelLabel { color: #FFFFFF; font-size: 14px; font-weight: bold; }
+            #PanelValue { color: #ffffff; font-size: 14px; }
+            #PanelStatus { font-size: 20px; font-weight: bold; }
+            
+            QScrollBar:vertical { border: none; background: #2b2b2b; width: 8px; margin: 0px; }
+            QScrollBar::handle:vertical { background: #555; min-height: 20px; border-radius: 4px; }
+            QScrollBar::handle:vertical:hover { background: #f7a51b; }
+            QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
+        """)
