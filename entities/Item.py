@@ -478,7 +478,25 @@ class Item:
             raise e
         finally:
             cur.close()
-            conn.close()
+            conn.close() 
 
+    @staticmethod
+    def has_inventory(id_item):
+        sql = """
+            SELECT SUM(quantity) 
+            FROM inventory 
+            WHERE id_item = %s
+        """
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (id_item,))
+            result = cur.fetchone()[0]
+            return result is not None and result > 0
+        finally:
+            cur.close()
+            conn.close()
+    
     def __repr__(self):
         return f"<Item name={self.name} sku={self.sku} id={self.id_item}>"
+    

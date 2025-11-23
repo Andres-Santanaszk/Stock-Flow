@@ -6,8 +6,10 @@ from PySide6.QtWidgets import (
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
 
+from entities.ItemLocation import ItemLocation
 from entities.Item import Item
 from ui.translations import ITEM_PACK_TYPE_ES
+from ui.utils.common_widgets import SwitchButton
 
 class UpdateItemForm(QWidget):
     def __init__(self, parent=None):
@@ -19,7 +21,7 @@ class UpdateItemForm(QWidget):
         # -------------------------------
         # TITULO
         # -------------------------------
-        title_label = QLabel("Actualizar Ítem Existente")
+        title_label = QLabel("Modificar Ítem ")
         title_label.setFont(QFont("Segoe UI", 20, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setObjectName("FormTitle")
@@ -56,6 +58,12 @@ class UpdateItemForm(QWidget):
         self.txtSKU = QLineEdit()
         self.txtBarcode = QLineEdit()
 
+        #Boton de activo o desactivo
+        self.txtDesc = QTextEdit()
+        self.txtDesc.setMinimumHeight(80)
+        self.btnActive = SwitchButton() 
+        self.btnActive.setToolTip("Activar o Desactivar este ítem")
+        
         self.cmbBrand = QComboBox()
         self.cmbCategory = QComboBox()
 
@@ -74,7 +82,8 @@ class UpdateItemForm(QWidget):
         info_layout.addRow("Nombre:", self.txtName)
         info_layout.addRow("SKU:", self.txtSKU)
         info_layout.addRow("Código de barras:", self.txtBarcode)
-
+        info_layout.addRow("Estado Activo:", self.btnActive)
+        
         stock_layout.addRow("Marca:", self.cmbBrand)
         stock_layout.addRow("Categoría:", self.cmbCategory)
         stock_layout.addRow("Tipo de empaque:", self.cmbPack)
@@ -89,7 +98,6 @@ class UpdateItemForm(QWidget):
         card_title_info = QLabel("Información Principal")
         card_title_info.setObjectName("SectionTitle")
         card_info_layout.addWidget(card_title_info)
-        card_info_layout.addLayout(info_layout)
         card_info_layout.addLayout(info_layout)
         card_info_layout.addStretch()
 
@@ -116,7 +124,8 @@ class UpdateItemForm(QWidget):
         self.btnSave.setObjectName("BtnSave")
 
         self.btnClear = QPushButton("Restablecer")
-
+        self.btnClear.setObjectName("BtnClear")
+        
         # LAYOUTS ORGANIZADOS
         top_cards_layout = QHBoxLayout()
         top_cards_layout.addWidget(card_info, 1)
@@ -125,7 +134,7 @@ class UpdateItemForm(QWidget):
         btns_layout = QHBoxLayout()
         btns_layout.addStretch(1)
         btns_layout.addWidget(self.btnClear, 1)
-        btns_layout.addWidget(self.btnSave, 1)
+        btns_layout.addWidget(self.btnSave, 2)
 
         root_layout = QVBoxLayout(self)
         root_layout.setContentsMargins(20, 20, 20, 20)
@@ -191,7 +200,7 @@ class UpdateItemForm(QWidget):
             }
             #BtnSave {
                 background-color: #f7a51b;
-                color: #000;
+                color: #000000;
                 font-weight: bold;
                 font-size: 15px;
                 padding: 10px 15px;
@@ -199,6 +208,16 @@ class UpdateItemForm(QWidget):
             }
             #BtnSave:hover {
                 background-color: #f7c774;
+            }
+            #BtnClear {
+                background-color: #555555;
+                color: #ECEFF1;
+                font-size: 15px;
+                padding: 10px 15px;
+                border-radius: 5px;
+            }
+            #BtnClear:hover {
+                background-color: #6A6A6A;
             }
         """)
 
@@ -284,6 +303,8 @@ class UpdateItemForm(QWidget):
             self.spnMinQty.setValue(item.min_qty or 0)
 
             self.original_sku = item.sku
+            is_active = bool(item.active) 
+            self.btnActive.setChecked(is_active)
 
             self._set_combo(self.cmbBrand, item.brand_id)
             self._set_combo(self.cmbCategory, item.category_id)
@@ -326,6 +347,20 @@ class UpdateItemForm(QWidget):
             QMessageBox.warning(self, "Duplicado", f"El SKU '{sku}' ya existe.")
             return
 
+        if not self.btnActive.isChecked():
+            # Consultamos solo el número total
+            total_stock = ItemLocation.get_total_stock(self.currentid_item)
+            
+            if total_stock > 0:
+                QMessageBox.warning(
+                    self,
+                    "No permitido",
+                    f"No puedes desactivar este ítem. Hay un total de {total_stock} unidades en inventario."
+                )
+                self._clear_form()
+                self.load_items_for_search()
+                return    
+
         try:
             item = Item(
                 id_item=self.currentid_item,
@@ -336,24 +371,39 @@ class UpdateItemForm(QWidget):
                 brand_id=self.cmbBrand.currentData(),
                 category_id=self.cmbCategory.currentData(),
                 pack_type=self.cmbPack.currentData(),
-                min_qty=self.spnMinQty.value()
+                min_qty=self.spnMinQty.value(),
+                active=self.btnActive.isChecked()
             )
 
             item.update()
             self.original_sku = sku
             
             QMessageBox.information(self, "Éxito", "Ítem actualizado correctamente.")
-            
+            self._clear_form()
             # Opcional: Refrescar la lista para mostrar nuevo nombre/SKU
             self.load_items_for_search()
-            # Intentamos volver a seleccionar el item recién editado
-            new_display = f"{name} | SKU: {sku}"
-            idx = self.combo_item.findText(new_display)
-            if idx >= 0:
-                self.combo_item.setCurrentIndex(idx)
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo actualizar:\n{e}")
+            
+    def _clear_form(self):
+        self.currentid_item = None
+        self.original_sku = None
+
+        self.combo_item.setCurrentIndex(0)
+
+        self.txtName.clear()
+        self.txtSKU.clear()
+        self.txtBarcode.clear()
+        self.txtDesc.clear()
+
+        self.spnMinQty.setValue(0)
+        self.btnActive.setChecked(False)
+
+        self.cmbBrand.setCurrentIndex(0)
+        self.cmbCategory.setCurrentIndex(0)
+        self.cmbPack.setCurrentIndex(0)
+
 
     # -------------------------------
     # RESTAURAR DATOS ORIGINALES

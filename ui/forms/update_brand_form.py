@@ -5,6 +5,7 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
+from ui.utils.common_widgets import SwitchButton
 from entities.Brand import Brand  # Asegúrate de tener esta clase
 
 class UpdateBrandForm(QWidget):
@@ -16,7 +17,7 @@ class UpdateBrandForm(QWidget):
         # -------------------------------
         # TÍTULO
         # -------------------------------
-        title_label = QLabel("Actualizar Marca Existente")
+        title_label = QLabel("Modificar Marca")
         title_label.setFont(QFont("Segoe UI", 20, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setObjectName("FormTitle")
@@ -42,18 +43,23 @@ class UpdateBrandForm(QWidget):
 
         # CAMPOS DE DATOS
         self.txtName = QLineEdit()
-        self.txtDesc = QTextEdit()
-        self.txtDesc.setFixedHeight(70)
         self.txtWebsite = QLineEdit()
         self.txtEmail = QLineEdit()
+        self.txtDesc = QTextEdit()
+        self.txtDesc.setFixedHeight(80)
+        self.btnActive = SwitchButton() 
+        self.btnActive.setToolTip("Activar o Desactivar esta marca")
+        
         
         # AGREGAR AL LAYOUT
         # (Opcional: Poner el buscador fuera de la tarjeta o dentro, aquí lo pongo primero)
         form_layout.addRow("<b>Buscar Marca:</b>", self.combo_search)
         form_layout.addRow("Nombre:", self.txtName)
-        form_layout.addRow("Descripción:", self.txtDesc)
         form_layout.addRow("Sitio web:", self.txtWebsite)
         form_layout.addRow("Email contacto:", self.txtEmail)
+        form_layout.addRow("Estado Activo:", self.btnActive)
+        form_layout.addRow("Descripción:", self.txtDesc)
+        
 
         # -------------------------------
         # TARJETA (CARD)
@@ -219,6 +225,9 @@ class UpdateBrandForm(QWidget):
                 self.txtDesc.setText(brand.description or "")
                 self.txtWebsite.setText(brand.website or "")
                 self.txtEmail.setText(brand.contact_email or "")
+                is_active = bool(brand.active) 
+                self.btnActive.setChecked(is_active)
+                
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo cargar la marca:\n{e}")
 
@@ -243,6 +252,21 @@ class UpdateBrandForm(QWidget):
             QMessageBox.warning(self, "Faltan datos", "El nombre de la marca es obligatorio.")
             return
 
+        # --- VALIDACIÓN DE SEGURIDAD ---
+        # Si el usuario quiere desactivar la marca...
+        if not self.btnActive.isChecked():
+            # ...verificamos si hay items usándola
+            if Brand.has_associated_items(self.current_id_brand):
+                QMessageBox.warning(
+                    self, 
+                    "No permitido", 
+                    "No puedes desactivar esta marca porque hay productos asociados a ella.\n"
+                    "Elimina o cambia la marca de esos productos antes de continuar."
+                )
+                self._clear_form()
+                self.load_brands_list
+                return
+        
         try:
             # Creamos objeto Brand con el ID existente
             brand = Brand(
@@ -250,18 +274,32 @@ class UpdateBrandForm(QWidget):
                 name=name,
                 description=desc,
                 website=web,
-                contact_email=mail
+                contact_email=mail,
+                active=self.btnActive.isChecked()
             )
             
             # LLAMADA A UPDATE (Asegúrate de tener este método en tu clase Brand)
             brand.update() 
             
             QMessageBox.information(self, "Éxito", "Marca actualizada correctamente.")
-            
+            self._clear_form()
             # Opcional: Recargar la lista por si cambió el nombre
-            current_idx = self.combo_search.currentIndex()
+            self.combo_search.blockSignals(True)
+            self._clear_form()
             self.load_brands_list()
-            self.combo_search.setCurrentIndex(current_idx)
+            self.combo_search.blockSignals(False)
             
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo actualizar la marca:\n{e}")
+            
+    def _clear_form(self):
+        self.current_id_brand = None
+        self.combo_search.blockSignals(True)
+        self.combo_search.setCurrentIndex(0)
+        self.combo_search.blockSignals(False)
+        
+        self.txtName.clear()
+        self.txtWebsite.clear()
+        self.txtEmail.clear()
+        self.txtDesc.clear()
+        self.btnActive.setChecked(False)

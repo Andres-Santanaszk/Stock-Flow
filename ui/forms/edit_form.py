@@ -68,22 +68,22 @@ class UpdateHubWidget(QWidget):
 
         # Botones
         self.btn_item = AnimatedHubButton(
-            "Actualizar Ítem",
+            "Modificar Ítem",
             BASE_DIR / "utils" / "add_item.svg",
             "document-edit",
         )
         self.btn_brand = AnimatedHubButton(
-            "Actualizar Marca",
+            "Modificar Marca",
             BASE_DIR / "utils" / "brands.svg",
             "document-edit",
         )
         self.btn_category = AnimatedHubButton(
-            "Actualizar Categoría",
+            "Modificar Categoría",
             BASE_DIR / "utils" / "add_category.svg",
             "document-edit",
         )
         self.btn_location = AnimatedHubButton(
-            "Actualizar Locación",
+            "Modificar Ubicación",
             BASE_DIR / "utils" / "add_location.svg",
             "document-edit",
         )
@@ -120,7 +120,7 @@ class UpdateHubWidget(QWidget):
 
         # Estilos
         self.setStyleSheet("""
-            #HubTitle { color: #3498db; margin-bottom: 10px; }
+            #HubTitle { color: #f7a51b; margin-bottom: 10px; }
             #HubSubtitle { color: #FFFFFF; margin-bottom: 20px; }
             QToolButton {
                 min-height: 260px; min-width: 300px; font: Segoe UI;
@@ -128,13 +128,13 @@ class UpdateHubWidget(QWidget):
                 border-radius: 8px; background-color: #3C3F41; border: 1px solid #555555;
             }
             QToolButton:hover {
-                background-color: #5dade2; color: black; border: 1px solid #3498db;
+                background-color: #f7c774; color: black; border: 1px solid #f7a51b;
             }
             #LinkButton {
                 background-color: transparent; border: none; color: #AAAAAA;
                 font-size: 16px; font-weight: bold; padding: 10px; text-align: center;
             }
-            #LinkButton:hover { text-decoration: underline; color: #3498db; }
+            #LinkButton:hover { text-decoration: underline; color: #f7a51b; }
         """)
 
         # --- CAMBIO 2: CONEXIONES A LOS MÉTODOS ACTUALIZADOS ---
@@ -152,7 +152,7 @@ class UpdateHubWidget(QWidget):
     
     def _open_item_dialog(self):
         dlg = QDialog(self)
-        dlg.setWindowTitle("Registrar ítem")
+        dlg.setWindowTitle("Modificar Ítem")
         form = UpdateItemForm(dlg)
         lay = QVBoxLayout(dlg)
         lay.addWidget(form)
@@ -161,29 +161,29 @@ class UpdateHubWidget(QWidget):
 
     def _open_brand_dialog(self):
         dlg = QDialog(self)
-        dlg.setWindowTitle("Registrar ítem")
+        dlg.setWindowTitle("Modificar Marca")
         form = UpdateBrandForm(dlg)
         lay = QVBoxLayout(dlg)
         lay.addWidget(form)
-        dlg.resize(850, 620)
+        dlg.resize(600, 500)
         dlg.exec()
         
     def _open_category_dialog(self):
         dlg = QDialog(self)
-        dlg.setWindowTitle("Registrar ítem")
+        dlg.setWindowTitle("Modificar Categoria")
         form = UpdateCategoryForm(dlg)
         lay = QVBoxLayout(dlg)
         lay.addWidget(form)
-        dlg.resize(850, 620)
+        dlg.resize(600, 500)
         dlg.exec()
         
     def _open_location_dialog(self):
         dlg = QDialog(self)
-        dlg.setWindowTitle("Registrar ítem")
+        dlg.setWindowTitle("Modificar Ubicación")
         form = UpdateLocationForm(dlg)
         lay = QVBoxLayout(dlg)
         lay.addWidget(form)
-        dlg.resize(850, 620)
+        dlg.resize(600, 500)
         dlg.exec()
 
     def _open_update_view(self):

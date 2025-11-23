@@ -159,5 +159,31 @@ class Category:
             cur.close()
             conn.close()
 
+    @staticmethod
+    def has_associated_items(id_category):
+        """
+        Verifica si existen productos (items) asociados a esta categoría.
+        Devuelve True si hay al menos un producto, False si está vacía.
+        """
+        # Usamos 'SELECT 1' con 'LIMIT 1' porque es mucho más rápido 
+        # que contar todos los productos (COUNT)
+        sql = "SELECT 1 FROM items WHERE category_id = %s LIMIT 1"
+        
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (id_category,))
+            row = cur.fetchone()
+            # Si row tiene datos, significa que encontró al menos un producto
+            return True if row else False
+        except Exception as e:
+            print(f"Error verificando items en categoría: {e}")
+            # En caso de error, devolvemos False para no bloquear la app, 
+            # o True si prefieres ser conservador.
+            return False
+        finally:
+            cur.close()
+            conn.close()
+    
     def __repr__(self):
         return f"<Category name={self.name} id={self.id_category}>"

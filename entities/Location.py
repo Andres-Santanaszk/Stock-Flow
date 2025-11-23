@@ -91,7 +91,7 @@ class Location:
         Retorna una lista de tuplas (id_location, code, type)
         Ideal para llenar QComboBox.
         """
-        sql = "SELECT id_location, code, type FROM locations WHERE active = TRUE ORDER BY code;"
+        sql = "SELECT id_location, code, type FROM locations ORDER BY code;"
         conn = get_connection()
         try:
             cur = conn.cursor()

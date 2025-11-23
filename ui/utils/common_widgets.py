@@ -1,5 +1,6 @@
-from PySide6.QtCore import QSize, QEasingCurve, QPropertyAnimation
-from PySide6.QtWidgets import QPushButton, QToolButton
+from PySide6.QtCore import QSize, QEasingCurve, QPropertyAnimation, QRectF, QPoint, Qt, Property
+from PySide6.QtWidgets import QPushButton, QCheckBox
+from PySide6.QtGui import QPainter, QColor, QBrush
 
 class IconHoverAnimationMixin:
     """
@@ -57,3 +58,82 @@ class AnimatedButton(IconHoverAnimationMixin, QPushButton):
             base_icon_size=base_icon_size,
             hover_icon_size=hover_icon_size,
         )
+
+class SwitchButton(QCheckBox):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        # 1. CONFIGURACIÓN BÁSICA
+        self.setFixedSize(60, 30)  # Definimos el tamaño fijo del switch
+        self.setCursor(Qt.PointingHandCursor)  # Cambiamos el cursor a "manita"
+
+        # Colores (Estilo "Flat")
+        self._track_color_off = QColor("#BDC3C7")  # Gris
+        self._track_color_on = QColor("#2ECC71")  # Verde
+        self._thumb_color = QColor("#FFFFFF")  # Blanco
+
+        # 2. PREPARAR LA ANIMACIÓN
+        # Esta variable '_thumb_x' guardará la posición X del círculo blanco.
+        # Empieza en 3 píxeles (izquierda).
+        self._thumb_x = 3
+
+        self._animation = QPropertyAnimation(self, b"thumb_pos", self)
+        self._animation.setEasingCurve(QEasingCurve.InOutQuad)  # Aceleración suave
+        self._animation.setDuration(250)  # Duración: 250 milisegundos
+
+        # Conectamos el cambio de estado (click) con la función de animación
+        self.stateChanged.connect(self.start_transition)
+
+    # 3. DEFINIR LA PROPIEDAD ANIMABLE
+    # PySide necesita métodos get/set para que la animación sepa qué modificar
+    @Property(float)
+    def thumb_pos(self):
+        return self._thumb_x
+
+    @thumb_pos.setter
+    def thumb_pos(self, pos):
+        self._thumb_x = pos
+        self.update()  # ¡IMPORTANTE! Pide redibujar el widget cada vez que se mueve un milímetro
+
+    # 4. LÓGICA DE TRANSICIÓN
+    def start_transition(self, state):
+        self._animation.stop()  # Detener cualquier animación en curso
+        if state:
+            # Si está ACTIVO (checked), movemos el círculo a la derecha
+            # (Ancho total - Ancho círculo - Margen)
+            target = self.width() - 26 - 3
+            self._animation.setEndValue(target)
+        else:
+            # Si está INACTIVO, movemos a la izquierda
+            self._animation.setEndValue(3)
+
+        self._animation.start()
+
+    # 5. ÁREA DE CLIC (HITBOX)
+    def hitButton(self, pos: QPoint):
+        # Le decimos a Qt que CUALQUIER clic dentro del widget es válido.
+        return self.contentsRect().contains(pos)
+
+    # 6. EL PINTOR (La parte visual)
+    def paintEvent(self, e):
+        p = QPainter(self)
+        p.setRenderHint(QPainter.Antialiasing)  # Suavizar bordes (antidentado)
+        p.setPen(Qt.NoPen)  # Sin bordes negros feos
+
+        # A. Dibujar el FONDO (Track)
+        rect = QRectF(0, 0, self.width(), self.height())
+
+        if self.isChecked():
+            p.setBrush(QBrush(self._track_color_on))
+        else:
+            p.setBrush(QBrush(self._track_color_off))
+
+        # Dibujamos rectángulo redondeado (x, y, w, h, radioX, radioY)
+        p.drawRoundedRect(rect, 15, 15)
+
+        # B. Dibujar el CÍRCULO (Thumb)
+        p.setBrush(QBrush(self._thumb_color))
+        # Usamos la variable self._thumb_x que la animación está actualizando
+        p.drawEllipse(self._thumb_x, 3, 24, 24)
+
+        p.end()

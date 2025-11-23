@@ -5,6 +5,8 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
+from ui.utils.common_widgets import SwitchButton
+from entities.ItemLocation import ItemLocation
 from entities.Location import Location
 from ui.translations import LOCATION_TYPE_ES
 
@@ -17,7 +19,7 @@ class UpdateLocationForm(QWidget):
         # -------------------------------
         # TÍTULO
         # -------------------------------
-        title_label = QLabel("Actualizar Localización")
+        title_label = QLabel("Modificar Ubicación")
         title_label.setFont(QFont("Segoe UI", 20, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setObjectName("FormTitle")
@@ -51,11 +53,15 @@ class UpdateLocationForm(QWidget):
 
         self.txtDescription = QTextEdit()
         self.txtDescription.setMinimumHeight(80)
-
+        #boton
+        self.btnActive = SwitchButton() 
+        self.btnActive.setToolTip("Activar o Desactivar esta ubicacion")
+        
         # Agregar filas al formulario
         form_layout.addRow("<b>Buscar:</b>", self.combo_search)
         form_layout.addRow("Código:", self.txtCode)
         form_layout.addRow("Tipo:", self.cmbType)
+        form_layout.addRow("Estado Activo:", self.btnActive)
         form_layout.addRow("Descripción:", self.txtDescription)
 
         # -------------------------------
@@ -107,7 +113,7 @@ class UpdateLocationForm(QWidget):
 
         # Cargar datos iniciales
         self.load_locations_list()
-
+        
     def _apply_styles(self):
         self.setStyleSheet("""
             #FormTitle {
@@ -209,12 +215,13 @@ class UpdateLocationForm(QWidget):
             if loc:
                 self.txtCode.setText(loc.code)
                 self.txtDescription.setText(loc.description or "")
-
-                # Seleccionar el Tipo correcto
-                idx = self.cmbType.findData(loc.type)
-                if idx >= 0:
-                    self.cmbType.setCurrentIndex(idx)
-
+                is_active = bool(loc.active) 
+                self.btnActive.setChecked(is_active)
+              #Seleciona tipo correcto  
+            index = self.cmbType.findData(loc.type)
+            if index >= 0:
+                self.cmbType.setCurrentIndex(index)
+            
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo cargar datos:\n{e}")
 
@@ -237,6 +244,21 @@ class UpdateLocationForm(QWidget):
             QMessageBox.warning(self, "Faltan datos", "El Código y el Tipo son obligatorios.")
             return
 
+        # --- INICIO DE LA NUEVA VALIDACIÓN ---
+        # Si el usuario intenta desactivar (Check Box desmarcado)
+        if not self.btnActive.isChecked():
+            # Verificamos si hay cosas guardadas en esta ubicación
+            if ItemLocation.has_stock_in_location(self.current_id_location):
+                QMessageBox.warning(
+                    self, 
+                    "No permitido", 
+                    "No puedes desactivar esta ubicación porque contiene stock físico.\n"
+                    "Debes mover los productos a otra ubicación antes de desactivarla."
+                )
+                self._clear_form()
+                self.load_locations_list()
+                return
+
         try:
             # Creamos objeto Location con el ID existente
             location = Location(
@@ -244,18 +266,30 @@ class UpdateLocationForm(QWidget):
                 code=code,
                 type=tipe,
                 description=desc,
-                active=True
+                active=self.btnActive.isChecked()
             )
 
             # Necesitas este método en tu clase Location
             location.update()
 
             QMessageBox.information(self, "Éxito", "Localización actualizada correctamente.")
-            
+            self._clear_form()
             # Recargar la lista (por si cambió el código)
-            current = self.combo_search.currentIndex()
+            self.combo_search.blockSignals(True)
+            self._clear_form()
             self.load_locations_list()
-            self.combo_search.setCurrentIndex(current)
+            self.combo_search.blockSignals(False)
 
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudo actualizar:\n{e}")
+            
+    def _clear_form(self):
+        self.current_id_location = None
+        self.combo_search.blockSignals(True)
+        self.combo_search.setCurrentIndex(0)
+        self.combo_search.blockSignals(False)
+            
+        self.txtCode.clear()
+        self.cmbType.setCurrentIndex(0)
+        self.txtDescription.clear()
+        self.btnActive.setChecked(False)
