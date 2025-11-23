@@ -278,7 +278,7 @@ class Item:
     @staticmethod
     def search_items_for_display(name_fragment, limit=100, offset=0):
         """
-        Busca ítems para MOSTRAR en una tabla (con JOINs) y
+        Busca ítems ACTIVOS para MOSTRAR en una tabla (con JOINs) y
         soporta paginación (LIMIT/OFFSET).
         """
         sql = """
@@ -293,6 +293,7 @@ class Item:
         LEFT JOIN brands b ON i.brand_id = b.id_brand
         LEFT JOIN categories c ON i.category_id = c.id_category
         WHERE (%s = '' OR LOWER(i.name) LIKE LOWER(%s))
+          AND i.active = TRUE
         ORDER BY i.name
         LIMIT %s OFFSET %s; 
         """
@@ -334,7 +335,6 @@ class Item:
             cur.execute(sql, (id_item,))
             row = cur.fetchone()
             if row:
-                # Retornamos un diccionario para usarlo fácil en la UI
                 return {
                     "name": row[0], 
                     "sku": row[1], 
@@ -342,8 +342,8 @@ class Item:
                     "pack": row[3], 
                     "min": row[4], 
                     "active": row[5],
-                    "brand_name": row[6],   # Nombre real
-                    "category_name": row[7] # Nombre real
+                    "brand_name": row[6], 
+                    "category_name": row[7] 
                 }
             return None
         finally:

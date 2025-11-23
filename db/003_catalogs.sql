@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS brands (
   description TEXT,
   website VARCHAR(255),
   contact_email VARCHAR(150) NOT NULL UNIQUE,
+  active        BOOLEAN NOT NULL DEFAULT TRUE,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT chk_brands_contact_email_format
     CHECK (contact_email ~* '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$')

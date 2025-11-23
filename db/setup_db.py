@@ -15,15 +15,15 @@ def run_python_seed_by_path(seed_path: str, load_demo: bool):
     mod.run(load_demo=load_demo)
 
 if __name__ == "__main__":
-    # rol y DB
+    #rol y DB
     ensure_role()
     ensure_database()
 
-    # Migraciones
+    #migraciones
     load_seed = os.getenv("LOAD_SEED", "on").lower() in ("1", "true", "on", "yes")
     migrate(load_seed=load_seed) 
 
-    # Seeds en python 
+    #seeds en python 
     if load_seed:
         load_demo = os.getenv("LOAD_DEMO_SEEDS", "off").lower() in ("1", "true", "on", "yes")
         seed_path = os.path.join(os.path.dirname(__file__), "999_seed.py")

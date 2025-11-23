@@ -1,13 +1,18 @@
 import os
 from db.connection import get_connection
+from security.hashing import hash_password
+
+from security.hashing import hash_password
 
 def seed_roles_permissions(cur):
+    print("--> Sembrando Roles y Permisos...")
+
     cur.execute("""
     INSERT INTO roles (id, name, description) VALUES
-      (1, 'Administrador', 'Acceso total al sistema'),
-      (2, 'Líder de Almacén', 'Gestiona operaciones de almacén'),
-      (3, 'Recursos Humanos', 'Alta y administración de usuarios'),
-      (4, 'Operador de Almacén', 'Ejecuta movimientos de inventario')
+      (1, 'Administrador', 'Acceso total y control absoluto del sistema.'),
+      (2, 'Líder de Almacén', 'Gestión operativa total, excepto administración de usuarios.'),
+      (3, 'Recursos Humanos', 'Acceso exclusivo a la gestión de usuarios y roles.'),
+      (4, 'Operador de Almacén', 'Acceso a movimientos, visualización de stock y dashboard.')
     ON CONFLICT (id) DO UPDATE
       SET name = EXCLUDED.name,
           description = EXCLUDED.description;
@@ -15,40 +20,70 @@ def seed_roles_permissions(cur):
 
     cur.execute("""
     INSERT INTO permissions (id, code, description) VALUES
-      (1, 'items.read', 'Puede ver ítems del inventario'),
-      (2, 'items.write', 'Puede crear o editar ítems'),
-      (3, 'movements.post', 'Puede registrar movimientos de inventario'),
-      (4, 'users.manage', 'Puede administrar usuarios y roles'),
-      (5, 'inventory.view', 'Puede ver el estado del inventario'),
-      (6, 'locations.view', 'Puede ver ubicaciones'),
-      (7, 'reports.view', 'Puede acceder al historial de movimientos'),
-      (8, 'catalogs.manage', 'Puede gestionar catálogos base (marcas, categorías, etc.)')
+      (1, 'items.read', 'Ver lista de ítems (Inventory On Hand)'),
+      (2, 'items.write', 'Crear y editar ítems'),
+      (3, 'movements.post', 'Registrar Entradas/Salidas/Ajustes'),
+      (4, 'users.manage', 'Acceso al módulo Gestión de Roles'),
+      (5, 'inventory.view', 'Ver conteos y disponibilidad'),
+      (6, 'locations.view', 'Ver mapa de localizaciones'),
+      (7, 'dashboard.view', 'Ver métricas y gráficas principales'),
+      (8, 'catalogs.manage', 'Gestionar Marcas, Categorías, etc.'),
+      (9, 'reports.view', 'Ver historial de movimientos y reportes')
     ON CONFLICT (id) DO UPDATE
       SET code = EXCLUDED.code,
           description = EXCLUDED.description;
     """)
 
+    cur.execute("TRUNCATE TABLE role_permissions RESTART IDENTITY;")
+    
     cur.execute("""
     INSERT INTO role_permissions (role_id, permission_id) VALUES
-      (1,1),(1,2),(1,3),(1,4),(1,5),(1,6),(1,7),(1,8),
-      (2,1),(2,2),(2,3),(2,5),(2,6),(2,7),
-      (3,4),
-      (4,1),(4,3),(4,5),(4,6)
-    ON CONFLICT DO NOTHING;
+      (1,1), (1,2), (1,3), (1,4), (1,5), (1,6), (1,7), (1,8), (1,9);
+    """)
+
+    cur.execute("""
+    INSERT INTO role_permissions (role_id, permission_id) VALUES
+      (2,1), (2,2), (2,3), (2,5), (2,6), (2,7), (2,8), (2,9);
+    """)
+
+
+    cur.execute("""
+    INSERT INTO role_permissions (role_id, permission_id) VALUES
+      (3,4);
+    """)
+
+    cur.execute("""
+    INSERT INTO role_permissions (role_id, permission_id) VALUES
+      (4,1), (4,3), (4,5), (4,6), (4,7);
     """)
 
 def seed_users(cur):
-    cur.execute("""
-    INSERT INTO users (id_user, full_name, email, password_hash, active, role_id) VALUES
-      (1,'Admin','admin@demo.com','$2b$12$secrethash...',TRUE,1),
-      (2,'Operador','operador@demo.com','$2b$12$secrethash...',TRUE,2)
+    print("--> Sembrando Usuarios...")
+    pass_standard = hash_password("12345")
+    pass_test = hash_password("a")
+    
+    users_data = [
+        (1, 'Andrés Jackson Santana Arreola', 'andres@stockflow.com', pass_standard, 1),
+        (2, 'Angel Secundino Sanchez', 'angel@stockflow.com', pass_standard, 2),
+        (3, 'Juan José Romero Hernandez', 'juan@stockflow.com', pass_standard, 3),
+        (4, 'José Alberto Higuera Macías', 'alberto@stockflow.com', pass_standard, 4),
+        (5, 'Prueba Rápida', 'a@a.aa', pass_test, 1)
+    ]
+
+    sql = """
+    INSERT INTO users (id_user, full_name, email, password_hash, active, role_id) 
+    VALUES (%s, %s, %s, %s, TRUE, %s)
     ON CONFLICT (id_user) DO UPDATE
       SET full_name = EXCLUDED.full_name,
           email = EXCLUDED.email,
           password_hash = EXCLUDED.password_hash,
           active = EXCLUDED.active,
           role_id = EXCLUDED.role_id;
-    """)
+    """
+
+    for user in users_data:
+        cur.execute(sql, user)
+        print(f"   -> Usuario procesado: {user[1]} (Rol ID: {user[4]})")
 
 def seed_brands(cur):
     cur.execute("""

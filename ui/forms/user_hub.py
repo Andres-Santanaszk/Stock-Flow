@@ -1,7 +1,7 @@
 from PySide6.QtWidgets import (
     QWidget, QVBoxLayout, QHBoxLayout, QLabel, QToolButton, 
     QTableWidget, QTableWidgetItem, QHeaderView, QAbstractItemView, 
-    QFrame, QStyledItemDelegate, QStyle, QFormLayout, QLineEdit, QDialog
+    QFrame, QStyledItemDelegate, QStyle, QFormLayout, QLineEdit, QMessageBox
 )
 from PySide6.QtCore import Qt, QSize, QPropertyAnimation, QEasingCurve, QRect
 from PySide6.QtGui import QIcon, QColor
@@ -10,6 +10,7 @@ import qtawesome as qta
 
 from entities.User import User
 from ui.forms.add_user_form import AddUserForm 
+from ui.forms.edit_user_form import EditUserForm
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 
@@ -137,30 +138,31 @@ class UserInfoPanel(QFrame):
         self.lbl_status.setText("") 
         self.lbl_status.setStyleSheet("") 
 
-    def update_data(self, user_id, name, email, role):
+    def update_data(self, user_id, name, email, role, is_active):
         self.lbl_name.setText(name)
         self.lbl_name.setStyleSheet("color: #f7a51b;") 
         self.lbl_email.setText(email)
         self.lbl_id.setText(str(user_id))
         self.lbl_role.setText(role)
-        self.lbl_status.setText("Estado: Activo")
-        self.lbl_status.setStyleSheet("color: #28a745;") 
+        
+        if is_active:
+            self.lbl_status.setText("Usuario activo.")
+            self.lbl_status.setStyleSheet("color: #28a745;")
+        else:
+            self.lbl_status.setText("Usuario inactivo.")
+            self.lbl_status.setStyleSheet("color: #e74c3c;")
 
 # --- 4. WIDGET PRINCIPAL ---
 class UserHubWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         
-        # --- ELEMENTOS DEL HEADER (Separados) ---
-        
-        # 1. Título Principal (Solo texto)
         self.lbl_title = QLabel("Administrar Usuarios")
         self.lbl_title.setObjectName("MainTitle")
         
         self.lbl_subtitle = QLabel("Seleccione un usuario para comenzar. ")
         self.lbl_subtitle.setObjectName("SubTitle")
         
-        # 2. Buscador
         self.txt_search = QLineEdit()
         self.txt_search.setPlaceholderText("Buscar usuario por nombre...")
         self.txt_search.setObjectName("SearchInput")
@@ -169,13 +171,11 @@ class UserHubWidget(QWidget):
         self.txt_search.addAction(search_icon, QLineEdit.LeadingPosition)
         self.txt_search.textChanged.connect(self.filter_user_list)
         
-        # 3. Botones
         self.btn_add = BigAnimatedButton("Nuevo Usuario", BASE_DIR / "utils" / "add_user.svg", "contact-new")
         self.btn_edit = BigAnimatedButton("Editar usuario", BASE_DIR / "utils" / "edit_user.svg", "user-properties")
         self.btn_add.setObjectName("BigBtn")
         self.btn_edit.setObjectName("BigBtn")
 
-        # --- CONTROLS LAYOUT (Fila 2: Buscador a la izq, Botones a la der) ---
         controls_layout = QHBoxLayout()
         controls_layout.addWidget(self.txt_search) # Buscador Izquierda
         controls_layout.addStretch()               # Espacio flexible
@@ -190,9 +190,10 @@ class UserHubWidget(QWidget):
         self.table_frame = QFrame()
         self.table_frame.setObjectName("TableContainer")
         self.table_users = QTableWidget()
-        self.table_users.setColumnCount(4)
-        self.table_users.setHorizontalHeaderLabels(["ID", "USUARIO", "EMAIL", "ROL"])
+        self.table_users.setColumnCount(5) 
+        self.table_users.setHorizontalHeaderLabels(["ID", "USUARIO", "EMAIL", "ROL", "active_hidden"])
         
+        self.table_users.setColumnHidden(4, True)
         header = self.table_users.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.Stretch)
         header.setSectionResizeMode(0, QHeaderView.ResizeToContents)
@@ -356,26 +357,37 @@ class UserHubWidget(QWidget):
         if not selected:
             self.detail_panel.reset_panel()
             return
+        
         row = selected[0].row()
+
         user_id = self.table_users.item(row, 0).text()
         name = self.table_users.item(row, 1).text()
         email = self.table_users.item(row, 2).text()
         role = self.table_users.item(row, 3).text()
-        self.detail_panel.update_data(user_id, name, email, role)
+
+        active_text = self.table_users.item(row, 4).text()
+
+        is_active = active_text == "True"
+
+        # Enviamos todo al panel
+        self.detail_panel.update_data(user_id, name, email, role, is_active)
 
     def filter_user_list(self, text):
         self.table_users.setRowCount(0)
         self.detail_panel.reset_panel()
         try:
-            users = User.search_by_name(text)
+            users = User.search_users_with_role(text) 
+            
             for row_idx, user_data in enumerate(users):
                 self.table_users.insertRow(row_idx)
+
                 for col_idx, data in enumerate(user_data):
                     item = QTableWidgetItem(str(data))
                     if col_idx == 0:
                          item.setTextAlignment(Qt.AlignCenter)
                     else:
                          item.setTextAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+                    
                     self.table_users.setItem(row_idx, col_idx, item)
         except Exception as e:
             print(f"Error filtering users: {e}")
@@ -390,4 +402,18 @@ class UserHubWidget(QWidget):
             
         
     def _open_edit_user_dialog(self):
-        print("Dialogo Editar")
+        selected_items = self.table_users.selectedItems()
+        if not selected_items:
+            QMessageBox.warning(self, "Error de selección", "Por favor, seleccione un usuario de la lista para continuar.")
+            return
+
+        # Obtenemos el ID de la columna 0 (que usualmente está oculta o es la primera)
+        row = selected_items[0].row()
+        user_id = self.table_users.item(row, 0).text() 
+        
+        # Abrimos el Dialog pasando el ID
+        # Convertimos a int si tu DB espera int
+        dialog = EditUserForm(int(user_id), self)
+        
+        if dialog.exec():
+            self.refresh_user_list()

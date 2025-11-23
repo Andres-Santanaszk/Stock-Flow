@@ -7,7 +7,7 @@ from config.settings import (
 import os
 
 PGSUPERUSER = os.getenv("PGSUPERUSER", "postgres")
-PGSUPERPASSWORD = os.getenv("PGSUPERPASSWORD", "X")  # cambia según tu entorno
+PGSUPERPASSWORD = os.getenv("PGSUPERPASSWORD", "X")  # cambien esto por tu clave de postgres local
 PGSUPERDB = os.getenv("PGSUPERDB", "postgres")
 
 def ensure_role():

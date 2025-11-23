@@ -7,11 +7,12 @@ from PySide6.QtCore import Qt
 
 from security.hashing import hash_password 
 from entities.User import User
+from entities.Role import Role
 
 class AddUserForm(QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
-        self.setWindowTitle("Nuevo Usuario - Stock Flow")
+        self.setWindowTitle("Stock Flow - Agregar Usuario")
         self.setModal(True)
         self.setMinimumWidth(450)
         
@@ -43,11 +44,11 @@ class AddUserForm(QDialog):
         self.txt_email.setPlaceholderText("correo@ejemplo.com")
 
         self.cmb_role = QComboBox()
-        self.cmb_role.setPlaceholderText("Seleccione un rol")
-        # Data Dummy para roles
-        self.cmb_role.addItem("Administrador", 1)
-        self.cmb_role.addItem("Almacenista", 2)
-        self.cmb_role.addItem("Vendedor", 3)
+        self.cmb_role.setPlaceholderText("")
+        roles_data = Role.get_all()
+
+        for role_id, role_name in roles_data:
+            self.cmb_role.addItem(role_name, role_id)
 
         self.txt_pass = QLineEdit()
         self.txt_pass.setPlaceholderText("Contraseña")
@@ -77,11 +78,15 @@ class AddUserForm(QDialog):
         self.btn_cancel = QPushButton("Cancelar")
         self.btn_cancel.setObjectName("BtnCancel")
         self.btn_cancel.setCursor(Qt.PointingHandCursor)
+        self.btn_cancel.setAutoDefault(False) 
+        self.btn_cancel.setDefault(False)
         self.btn_cancel.clicked.connect(self.reject)
 
         self.btn_save = QPushButton("Guardar Usuario")
         self.btn_save.setObjectName("BtnSave")
         self.btn_save.setCursor(Qt.PointingHandCursor)
+        self.btn_save.setDefault(True) 
+        self.btn_save.setAutoDefault(True)
         self.btn_save.clicked.connect(self._on_save)
 
         btn_layout.addWidget(self.btn_cancel)

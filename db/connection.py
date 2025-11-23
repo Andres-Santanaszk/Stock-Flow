@@ -1,4 +1,3 @@
-# db/connection.py
 import psycopg2
 from psycopg2 import OperationalError
 from config.settings import DB_USER, DB_PASSWORD, DB_NAME, DB_HOST, DB_PORT

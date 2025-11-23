@@ -1,5 +1,7 @@
 from connection import get_connection
 
+
+#nosotros no tenemos productos, es simplemente un ejemplo.
 def get_products():
     try:
         conn = get_connection()

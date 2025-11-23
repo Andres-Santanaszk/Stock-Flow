@@ -13,8 +13,9 @@ from entities.Item import Item
 from entities.ItemLocation import ItemLocation
 
 class MovementsWidget(QWidget):
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, current_user=None):
         super().__init__(parent)
+        self.current_user = current_user
         self.setup_ui()
         self.setup_styles()
         
@@ -495,7 +496,7 @@ class MovementsWidget(QWidget):
             final_to = dest_id if dest_id else None
 
         try:
-            current_user_id = 1 
+            current_user_id = self.current_user.id_user 
             movement = Movement(
                 id_item=id_item_resolved,
                 id_user=current_user_id,
@@ -552,7 +553,7 @@ class MovementsWidget(QWidget):
                 font-size: 18px;
             }
             QLineEdit:focus, QComboBox:focus, QSpinBox:focus {
-                border: 1px solid #f7c774;
+                border: 2px solid #f7a51b;
             }
             #SubmitButton {
                 background-color: "#f7a51b";

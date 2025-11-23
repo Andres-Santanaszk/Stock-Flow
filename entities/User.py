@@ -1,4 +1,5 @@
 from db.connection import get_connection
+from security.hashing import check_password
 
 class User:
     def __init__(
@@ -124,9 +125,9 @@ class User:
             if conn: conn.close()
 
     @staticmethod
-    def get_active_users():
+    def get_users():
         """
-        Retorna usuarios activos haciendo JOIN con roles para obtener el nombre.
+        Retorna usuarios haciendo JOIN con roles para obtener el nombre.
         Columns: id_user, full_name, email, role_name
         """
         sql = """
@@ -137,7 +138,6 @@ class User:
             r.name as role_name
         FROM users u
         LEFT JOIN roles r ON u.role_id = r.id
-        WHERE u.active = true 
         ORDER BY u.id_user ASC;
         """
         
@@ -156,32 +156,25 @@ class User:
             
     @staticmethod
     def search_by_name(name_fragment):
-        """
-        Busca usuarios activos cuyo nombre coincida parcialmente con el fragmento.
-        Retorna: Lista de tuplas (id_user, full_name, email, role_name)
-        """
         sql = """
         SELECT 
             u.id_user, 
             u.full_name, 
             u.email, 
-            r.name as role_name
+            r.name as role_name,
+            u.active
         FROM users u
         LEFT JOIN roles r ON u.role_id = r.id
-        WHERE u.active = true
-          AND (%s = '' OR LOWER(u.full_name) LIKE LOWER(%s))
+        WHERE (%s = '' OR LOWER(u.full_name) LIKE LOWER(%s))
         ORDER BY u.id_user ASC;
         """
         
-        # Si name_fragment es None, usamos cadena vacía para evitar errores
         search_term = name_fragment if name_fragment else ""
         pattern = f"%{search_term}%"
         
         conn = get_connection()
         try:
             cur = conn.cursor()
-            # Pasamos search_term para la primera comprobación (%s = '')
-            # Y pattern para el LIKE (%s)
             cur.execute(sql, (search_term, pattern))
             rows = cur.fetchall()
             return rows
@@ -191,6 +184,112 @@ class User:
         finally:
             cur.close()
             conn.close()
+    
+    @staticmethod
+    def get_by_id(user_id):
+        """Recupera un usuario por su ID para llenado de formularios."""
+        sql = "SELECT id_user, full_name, email, password_hash, active, role_id FROM users WHERE id_user = %s"
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (user_id,))
+            row = cur.fetchone()
+            if row:
+                return User(
+                    id_user=row[0],
+                    full_name=row[1],
+                    email=row[2],
+                    password_hash=row[3],
+                    active=row[4],
+                    role_id=row[5]
+                )
+            return None
+        finally:
+            cur.close()
+            conn.close()        
+            
+    @staticmethod
+    def search_users_with_role(search_query=""):
+        """
+        Realiza un JOIN para obtener el nombre del rol en lugar del ID.
+        Retorna: (id_user, full_name, email, role_name, active)
+        """
+        
+        sql = """
+        SELECT 
+            u.id_user, 
+            u.full_name, 
+            u.email, 
+            COALESCE(r.name, 'Sin Rol') as role_name, 
+            u.active
+        FROM users u
+        LEFT JOIN roles r ON u.role_id = r.id
+        WHERE (%s = '' OR LOWER(u.full_name) LIKE LOWER(%s))
+        ORDER BY u.id_user ASC;
+        """
+        
 
+        term = search_query if search_query else ""
+        pattern = f"%{term}%"
+
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (term, pattern))
+            rows = cur.fetchall()
+            return rows
+        except Exception as e:
+            print(f"Error fetching users with roles: {e}")
+            return []
+        finally:
+            if cur: cur.close()
+            if conn: conn.close()
+    
+    @staticmethod
+    def authenticate(email, password_plain):
+        """
+        Verifica credenciales.
+        Retorna el objeto User si es válido, o None si falla.
+        """
+        sql = """
+        SELECT id_user, full_name, email, password_hash, active, role_id 
+        FROM users 
+        WHERE email = %s;
+        """
+        
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (email,))
+            row = cur.fetchone()
+            
+            if not row:
+                return None
+
+            id_user, name, db_email, db_hash, active, role_id = row
+
+            if not active:
+                print("Intento de login de usuario inactivo.")
+                return None 
+
+            if check_password(password_plain, db_hash):
+                return User(
+                    id_user=id_user,
+                    full_name=name,
+                    email=db_email,
+                    password_hash=db_hash, 
+                    active=active,
+                    role_id=role_id
+                )
+            else:
+                return None
+
+        except Exception as e:
+            print(f"Error de autenticación: {e}")
+            return None
+        finally:
+            cur.close()
+            conn.close()        
+    
     def __repr__(self):
         return f"<User id={self.id_user} email={self.email} role_id={self.role_id}>"

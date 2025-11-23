@@ -5,7 +5,7 @@ from PySide6.QtWidgets import QApplication
 from PySide6.QtGui import QFont, QIcon
 import qdarktheme
 
-from ui.login_window import LoginDialog
+from ui.login_window import LoginWindow
 from ui.main_window import MainWindow
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -23,12 +23,19 @@ def main():
         print(f"WARNING: No se encontró el icono en: {icon_path}")
 
     app.setFont(QFont("Segoe UI"))
+    
+    login_dialog = LoginWindow()
 
-    login_dialog = LoginDialog()
-    if login_dialog.exec() == LoginDialog.Accepted and login_dialog.valid_login:
-        main_window = MainWindow()
+    if login_dialog.exec() == LoginWindow.Accepted and login_dialog.valid_login:
+        
+        current_user = login_dialog.user_session
+        print(f"INFO: Bienvenido {current_user.full_name} ({current_user.role_id})")
+
+        main_window = MainWindow(user=current_user) 
+        
         main_window.show()
         app.main_window = main_window
+        
         sys.exit(app.exec())
     else:
         print("INFO: Inicio de sesión cancelado o invalido.")
