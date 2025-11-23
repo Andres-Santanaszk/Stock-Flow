@@ -1,4 +1,4 @@
-from db.connection import get_connection  # Asumo que tienes esto configurado
+from db.connection import get_connection
 
 
 class Location:

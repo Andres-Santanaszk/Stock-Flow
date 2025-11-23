@@ -105,7 +105,7 @@ class view_location(QWidget):
 
         main_layout.addLayout(filter_layout)
         main_layout.addLayout(search_layout)
-        main_layout.addWidget(self.table_locations, 1)
+        main_layout.addWidget(self.table_locations, 12)
 
         main_layout.addStretch(1)
         main_layout.addWidget(self.btn_update_link)

@@ -110,7 +110,7 @@ class view_item(QWidget):
 
         main_layout.addLayout(filter_layout)
         main_layout.addLayout(search_layout)
-        main_layout.addWidget(self.table_items)
+        main_layout.addWidget(self.table_items, 12)
 
         main_layout.addStretch(1)
         main_layout.addWidget(self.btn_update_link)
@@ -119,6 +119,7 @@ class view_item(QWidget):
 
         self.setStyleSheet("""
             #HubTitle {
+                font-size: 28px;
                 color: #f7a51b;
                 margin-bottom: 10px;
             }
@@ -192,7 +193,7 @@ class view_item(QWidget):
 
     def _setup_table(self):
         headers = ["Nombre", "SKU", "Marca", "Categoría",
-                   "Tipo Empaque", "Mínimo", "Stock Disp.", "Estado"]
+                   "Tipo Empaque", "Mínimo", "Stock Disp."]
         self.table_items.setColumnCount(len(headers))
         self.table_items.setHorizontalHeaderLabels(headers)
 
@@ -204,7 +205,6 @@ class view_item(QWidget):
         header.setSectionResizeMode(4, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(5, QHeaderView.ResizeToContents)
         header.setSectionResizeMode(6, QHeaderView.ResizeToContents)
-        header.setSectionResizeMode(7, QHeaderView.ResizeToContents)
 
         self.table_items.setEditTriggers(QTableWidget.NoEditTriggers)
         self.table_items.setSelectionBehavior(QTableWidget.SelectRows)
@@ -243,8 +243,6 @@ class view_item(QWidget):
 
                 self.item_ids.append(id_item)
 
-                active_text = "Activo" if active else "Inactivo"
-
                 self.table_items.setItem(row_idx, 0, QTableWidgetItem(name))
 
                 item_sku = QTableWidgetItem(sku)
@@ -268,10 +266,6 @@ class view_item(QWidget):
                 item_stock = QTableWidgetItem(str(total_stock))
                 item_stock.setTextAlignment(Qt.AlignCenter)
                 self.table_items.setItem(row_idx, 6, item_stock)
-
-                item_active = QTableWidgetItem(active_text)
-                item_active.setTextAlignment(Qt.AlignCenter)
-                self.table_items.setItem(row_idx, 7, item_active)
 
         except Exception as e:
             print(f"Error al cargar datos de ítems: {e}")
