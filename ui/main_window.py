@@ -140,29 +140,6 @@ class MainWindow(QMainWindow):
 
                 self._fade_anim = fade_out
 
-            else:
-                from PySide6.QtWidgets import QGraphicsOpacityEffect
-                from PySide6.QtCore import QPropertyAnimation
-
-                index = self.stacked_widget.indexOf(new_widget)
-                self.stacked_widget.setCurrentIndex(index)
-
-                effect_new = QGraphicsOpacityEffect(new_widget)
-                new_widget.setGraphicsEffect(effect_new)
-                effect_new.setOpacity(0.0)
-
-                fade_in = QPropertyAnimation(effect_new, b"opacity", self)
-                fade_in.setDuration(250)
-                fade_in.setStartValue(0.0)
-                fade_in.setEndValue(1.0)
-
-            def on_fade_in_finished():
-                new_widget.setGraphicsEffect(None)
-
-            fade_in.finished.connect(on_fade_in_finished)
-            fade_in.start()
-            self._fade_anim = fade_in
-
     def _setup_styles(self):
         self.setStyleSheet("""
             QMainWindow {
