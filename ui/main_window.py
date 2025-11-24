@@ -327,14 +327,14 @@ class MainWindow(QMainWindow):
             return
 
             #desactivar todos los demas botones
-            for other_key, btn in self.buttons.items():
-                if other_key != key:
+        for other_key, btn in self.buttons.items():
+            if other_key != key:
                     btn.setChecked(False)
 
-            widget = self.view_widgets.get(key)
-            if widget:
-                print(f"DEBUG: Cambiando a la vista: {key}")
-                self._animate_transition_to_widget(widget)        
+        widget = self.view_widgets.get(key)
+        if widget:
+            print(f"DEBUG: Cambiando a la vista: {key}")
+            self._animate_transition_to_widget(widget)        
 
     def _apply_role_permissions(self):
         """
