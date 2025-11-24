@@ -67,17 +67,14 @@ class MainWindow(QMainWindow):
         super().__init__()
         
         self.current_user = user
-        self.current_user_role = "Invitado"
         self.current_user_permissions = []
 
         self.setWindowTitle("Stock Flow")
         self.setWindowIcon(QIcon(str(icon_path)))
         self.setGeometry(100, 100, 1200, 800)
         
-        self.current_user_role = "Invitado"
-        
         if self.current_user:
-            self.setWindowTitle(f"Stock Flow - {self.current_user_role}")
+            self.setWindowTitle(f"Stock Flow - {self.current_user}")
             self.current_user_role = Role.get_name_by_id(self.current_user.role_id)
             self.current_user_permissions = Permission.get_codes_by_role_id(self.current_user.role_id)
             

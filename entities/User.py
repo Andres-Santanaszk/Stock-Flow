@@ -14,7 +14,7 @@ class User:
         self.id_user = id_user
         self.full_name = full_name
         self.email = email
-        self.password_hash = password_hash # password_hash YA VENDRA HASHEADO
+        self.password_hash = password_hash
         self.active = active
         self.role_id = role_id
 

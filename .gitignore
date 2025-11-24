@@ -30,7 +30,7 @@ MANIFEST
 # --- Virtual environments ---
 env/
 venv/
-venv310/
+venv*/
 ENV/
 env.bak/
 venv.bak/
