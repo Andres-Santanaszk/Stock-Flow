@@ -19,6 +19,8 @@ from entities.Role import Role
 from entities.Permission import Permission
 from ui.forms.edit_form import UpdateHubWidget
 from ui.view.movement_view import view_movement
+from ui.view.location_view import view_location
+from ui.view.inventory_view import view_item
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -297,6 +299,10 @@ class MainWindow(QMainWindow):
                 widget = UserHubWidget(self)
             elif key == "Administrar inventario":
                 widget = UpdateHubWidget(self)
+            elif key == "Localización":
+                widget = view_location(self)
+            elif key == "Inventory On Hand":
+                widget = view_item(self)
             elif key == "Historial de Movimientos":
                 widget = view_movement(self)
             else:
