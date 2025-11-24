@@ -1,21 +1,22 @@
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QDialog,
-    QLabel, QToolButton, QPushButton
+    QWidget, QVBoxLayout, QHBoxLayout, QLabel, QToolButton, QPushButton, QDialog
 )
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIcon, QFont
 from pathlib import Path
 
-from ui.forms.item_form import ItemFormWidget
-from ui.forms.brand_form import BrandFormWidget
-from ui.forms.category_form import CategoryFormWidget
-from ui.forms.location_form import LocationFormWidget
 from ui.utils.common_widgets import IconHoverAnimationMixin
+
+
+from ui.forms.update_item_form import UpdateItemForm
+from ui.forms.update_brand_form import UpdateBrandForm
+from ui.forms.update_category_form import UpdateCategoryForm
+from ui.forms.update_location_form import UpdateLocationForm
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 
-
 class AnimatedHubButton(IconHoverAnimationMixin, QToolButton):
+    # (Tu código del botón se queda EXACTAMENTE IGUAL, no lo toqué)
     def __init__(
         self,
         text,
@@ -26,7 +27,6 @@ class AnimatedHubButton(IconHoverAnimationMixin, QToolButton):
         hover_icon_size=QSize(170, 170),
     ):
         super().__init__(parent)
-
         self.setText(text)
         self.setCursor(Qt.PointingHandCursor)
         self.setToolButtonStyle(Qt.ToolButtonTextUnderIcon)
@@ -44,48 +44,51 @@ class AnimatedHubButton(IconHoverAnimationMixin, QToolButton):
         )
 
 
-class RegisterHubWidget(QWidget):
+class UpdateHubWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.lbl_title = QLabel("Gestor de Registros")
+        # --- INTERFAZ VISUAL (SE QUEDA IGUAL) ---
+        
+        self.lbl_title = QLabel("Gestor de Actualizaciones")
         self.lbl_title.setFont(QFont("Segoe UI", 48, QFont.Bold))
         self.lbl_title.setAlignment(Qt.AlignCenter)
         self.lbl_title.setObjectName("HubTitle")
 
-        self.lbl_subtitle = QLabel("Selecciona una opción para comenzar")
+        self.lbl_subtitle = QLabel("Selecciona qué deseas modificar")
         self.lbl_subtitle.setFont(QFont("Segoe UI", 18))
         self.lbl_subtitle.setAlignment(Qt.AlignCenter)
         self.lbl_subtitle.setObjectName("HubSubtitle")
 
-        self.btn_update_link = QPushButton(
-            "¿Ya has registrado tu ítem? Actualízalo aquí"
+        self.btn_register_link = QPushButton(
+            "¿Necesitas crear un registro nuevo? Hazlo aquí"
         )
-        self.btn_update_link.setObjectName("LinkButton")
-        self.btn_update_link.setCursor(Qt.PointingHandCursor)
+        self.btn_register_link.setObjectName("LinkButton")
+        self.btn_register_link.setCursor(Qt.PointingHandCursor)
 
+        # Botones
         self.btn_item = AnimatedHubButton(
-            "Registrar Ítem",
+            "Modificar Ítem",
             BASE_DIR / "utils" / "add_item.svg",
-            "list-add",
+            "document-edit",
         )
         self.btn_brand = AnimatedHubButton(
-            "Registrar Marca",
+            "Modificar Marca",
             BASE_DIR / "utils" / "brands.svg",
-            "bookmark-new",
+            "document-edit",
         )
         self.btn_category = AnimatedHubButton(
-            "Registrar Categoría",
+            "Modificar Categoría",
             BASE_DIR / "utils" / "add_category.svg",
-            "folder-new",
+            "document-edit",
         )
-
         self.btn_location = AnimatedHubButton(
-            "Registrar Locacion",
+            "Modificar Ubicación",
             BASE_DIR / "utils" / "add_location.svg",
-            "folder-new",
+            "document-edit",
         )
 
+        # Layouts
         top_row_layout = QHBoxLayout()
         top_row_layout.setSpacing(40)
         top_row_layout.addWidget(self.btn_item)
@@ -113,58 +116,44 @@ class RegisterHubWidget(QWidget):
         main_layout.addStretch(1)
         main_layout.addLayout(buttons_container_layout)
         main_layout.addStretch(1)
-        main_layout.addWidget(self.btn_update_link)
+        main_layout.addWidget(self.btn_register_link)
 
+        # Estilos
         self.setStyleSheet("""
-            #HubTitle {
-                color: #f7a51b;
-                margin-bottom: 10px;
-            }
-            #HubSubtitle {
-                color: #FFFFFF;
-                margin-bottom: 20px;
-            }
+            #HubTitle { color: #f7a51b; margin-bottom: 10px; }
+            #HubSubtitle { color: #FFFFFF; margin-bottom: 20px; }
             QToolButton {
-                min-height: 260px;
-                min-width: 300px;
-                font: Segoe UI;
-                font-size: 18px;
-                font-weight: bold;
-                padding: 15px;
-                border-radius: 8px;
-                background-color: #3C3F41;
-                border: 1px solid #555555;
+                min-height: 260px; min-width: 300px; font: Segoe UI;
+                font-size: 18px; font-weight: bold; padding: 15px;
+                border-radius: 8px; background-color: #3C3F41; border: 1px solid #555555;
             }
             QToolButton:hover {
-                background-color: #f7c774;
-                color: black;
-                border: 1px solid #f7a51b;
+                background-color: #f7c774; color: black; border: 1px solid #f7a51b;
             }
             #LinkButton {
-                background-color: transparent;
-                border: none;
-                color: #AAAAAA;
-                font-size: 16px;
-                font-weight: bold;
-                padding: 10px;
-                text-align: center;
+                background-color: transparent; border: none; color: #AAAAAA;
+                font-size: 16px; font-weight: bold; padding: 10px; text-align: center;
             }
-            #LinkButton:hover {
-                text-decoration: underline;
-                color: #f7a51b;
-            }
+            #LinkButton:hover { text-decoration: underline; color: #f7a51b; }
         """)
 
+        # --- CAMBIO 2: CONEXIONES A LOS MÉTODOS ACTUALIZADOS ---
         self.btn_item.clicked.connect(self._open_item_dialog)
         self.btn_brand.clicked.connect(self._open_brand_dialog)
         self.btn_category.clicked.connect(self._open_category_dialog)
-        self.btn_update_link.clicked.connect(self._open_update_view)
+        self.btn_register_link.clicked.connect(self._open_update_view)
         self.btn_location.clicked.connect(self._open_location_dialog)
+        
+        
 
+    # --- CAMBIO 3: MÉTODOS SIMPLIFICADOS ---
+    # Ya no configuramos el diálogo aquí. Simplemente abrimos la clase "Gestora"
+    # que contiene la lista y la lógica.
+    
     def _open_item_dialog(self):
         dlg = QDialog(self)
-        dlg.setWindowTitle("Registrar ítem")
-        form = ItemFormWidget(dlg)
+        dlg.setWindowTitle("Modificar Ítem")
+        form = UpdateItemForm(dlg)
         lay = QVBoxLayout(dlg)
         lay.addWidget(form)
         dlg.resize(850, 620)
@@ -172,26 +161,26 @@ class RegisterHubWidget(QWidget):
 
     def _open_brand_dialog(self):
         dlg = QDialog(self)
-        dlg.setWindowTitle("Registrar marca")
-        form = BrandFormWidget(dlg)
+        dlg.setWindowTitle("Modificar Marca")
+        form = UpdateBrandForm(dlg)
         lay = QVBoxLayout(dlg)
         lay.addWidget(form)
         dlg.resize(600, 500)
         dlg.exec()
-
+        
     def _open_category_dialog(self):
         dlg = QDialog(self)
-        dlg.setWindowTitle("Registrar categoría")
-        form = CategoryFormWidget(dlg)
+        dlg.setWindowTitle("Modificar Categoria")
+        form = UpdateCategoryForm(dlg)
         lay = QVBoxLayout(dlg)
         lay.addWidget(form)
         dlg.resize(600, 500)
         dlg.exec()
-
+        
     def _open_location_dialog(self):
         dlg = QDialog(self)
-        dlg.setWindowTitle("Registrar ubicacion")
-        form = LocationFormWidget(dlg)
+        dlg.setWindowTitle("Modificar Ubicación")
+        form = UpdateLocationForm(dlg)
         lay = QVBoxLayout(dlg)
         lay.addWidget(form)
         dlg.resize(600, 500)
@@ -199,3 +188,5 @@ class RegisterHubWidget(QWidget):
 
     def _open_update_view(self):
         print("Botón de 'Actualizar' presionado. Abriendo otra vista...")
+        # Aquí tu lógica para cambiar de pantalla en el MainWindow
+        

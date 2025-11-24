@@ -1,5 +1,6 @@
 from db.connection import get_connection
 
+
 class ItemLocation:
     def __init__(self, id_item=None, id_location=None, qty=0):
         self.id_item = id_item
@@ -55,6 +56,46 @@ class ItemLocation:
             cur.close()
             conn.close()
 
+    @staticmethod
+    def get_total_stock(id_item):
+        # Sumamos todas las cantidades de este ítem en todas las ubicaciones
+        sql = "SELECT SUM(qty) FROM item_locations WHERE id_item = %s"
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (id_item,))
+            row = cur.fetchone()
+            # Si row[0] es None (no hay registros), devolvemos 0
+            return row[0] if row and row[0] is not None else 0
+        except Exception as e:
+            print(f"Error getting total stock: {e}")
+            return 0
+        finally:
+            cur.close()
+            conn.close()
+    
+    # ... (código existente) ...
+
+    @staticmethod
+    def has_stock_in_location(id_location):
+        """
+        Verifica si hay stock físico (qty > 0) en una ubicación específica.
+        Retorna True si la ubicación no está vacía.
+        """
+        sql = "SELECT 1 FROM item_locations WHERE id_location = %s AND qty > 0 LIMIT 1"
+        conn = get_connection()
+        try:
+            cur = conn.cursor()
+            cur.execute(sql, (id_location,))
+            row = cur.fetchone()
+            # Si encuentra algo, devuelve True
+            return True if row else False
+        except Exception as e:
+            print(f"Error checking location stock: {e}")
+            return False
+        finally:
+            cur.close()
+            conn.close()
+    
     def __repr__(self):
         return f"<ItemLocation Item:{self.id_item} Loc:{self.id_location} Qty:{self.qty}>"
-    

@@ -4,8 +4,10 @@ from PySide6.QtWidgets import (
 )
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QFont
+from PySide6.QtGui import QFont
 import qtawesome as qta
 from ui.utils.common_widgets import AnimatedButton
+from ui.translations import MOV_TYPE_ES, MOV_REASON_ES, LOCATION_TYPE_ES, ITEM_PACK_TYPE_ES, BOOL_ES
 from ui.translations import MOV_TYPE_ES, MOV_REASON_ES, LOCATION_TYPE_ES, ITEM_PACK_TYPE_ES, BOOL_ES
 from entities.Location import Location
 from entities.Movement import Movement
@@ -18,8 +20,9 @@ class MovementsWidget(QWidget):
         self.current_user = current_user
         self.setup_ui()
         self.setup_styles()
-        
+
         self.load_locations()
+        self.load_items_for_search()
         self.load_items_for_search()
         self.set_movement_type("IN")
 
@@ -54,9 +57,12 @@ class MovementsWidget(QWidget):
         form_layout.addWidget(subtitle)
 
         type_layout = QHBoxLayout()
-        self.btn_in = self.create_type_button(MOV_TYPE_ES["IN"], "mdi.import", "#4CAF50", "#66BB6A")
-        self.btn_out = self.create_type_button(MOV_TYPE_ES["OUT"], "mdi.export", "#E91511", "#EF5350")
-        self.btn_adjust = self.create_type_button(MOV_TYPE_ES["ADJUST"], "mdi.swap-horizontal", "#f7a51b", "#f7c774")
+        self.btn_in = self.create_type_button(
+            MOV_TYPE_ES["IN"], "mdi.import", "#4CAF50", "#66BB6A")
+        self.btn_out = self.create_type_button(
+            MOV_TYPE_ES["OUT"], "mdi.export", "#E91511", "#EF5350")
+        self.btn_adjust = self.create_type_button(
+            MOV_TYPE_ES["ADJUST"], "mdi.swap-horizontal", "#f7a51b", "#f7c774")
 
         type_layout.addWidget(self.btn_in)
         type_layout.addWidget(self.btn_out)
@@ -102,13 +108,14 @@ class MovementsWidget(QWidget):
         lbl_qty = QLabel("Cantidad:")
         self.spin_qty = QSpinBox()
         self.spin_qty.setRange(1, 500)
+        self.spin_qty.setRange(1, 500)
         self.spin_qty.setFixedHeight(35)
         grid.addWidget(lbl_qty, 1, 0)
         grid.addWidget(self.spin_qty, 1, 1)
 
         lbl_origin = QLabel("Ubicación Origen:")
         self.combo_origin = QComboBox()
-        
+
         lbl_dest = QLabel("Ubicación Destino:")
         self.combo_dest = QComboBox()
 
@@ -120,6 +127,7 @@ class MovementsWidget(QWidget):
         lbl_reason = QLabel("Motivo:")
         self.combo_reason = QComboBox()
 
+
         grid.addWidget(lbl_reason, 4, 0)
         grid.addWidget(self.combo_reason, 4, 1)
 
@@ -127,6 +135,7 @@ class MovementsWidget(QWidget):
 
         form_layout.addStretch()
 
+        self.btn_submit = QPushButton("Registrar Movimiento")
         self.btn_submit = QPushButton("Registrar Movimiento")
         self.btn_submit.setObjectName("SubmitButton")
         self.btn_submit.setCursor(Qt.PointingHandCursor)
@@ -143,17 +152,19 @@ class MovementsWidget(QWidget):
         info_title.setFont(QFont("Segoe UI", 14, QFont.Bold))
         info_layout.addWidget(info_title)
 
+
         self.lbl_item_name = QLabel("Seleccione un item...")
         self.lbl_item_name.setWordWrap(True)
         self.lbl_item_name.setStyleSheet("color: #B0BEC5; font-size: 14px;")
-        
+
         self.lbl_current_stock = QLabel("Stock Actual: -")
-        self.lbl_current_stock.setStyleSheet("font-weight: bold; font-size: 16px; margin-top: 10px;")
+        self.lbl_current_stock.setStyleSheet(
+            "font-weight: bold; font-size: 16px; margin-top: 10px;")
 
         info_layout.addWidget(self.lbl_item_name)
         info_layout.addWidget(self.lbl_current_stock)
         info_layout.addStretch()
-        
+
         # Add frames to main layout
         main_layout.addWidget(self.form_frame, 70) 
         main_layout.addWidget(self.info_frame, 30) 
@@ -181,13 +192,12 @@ class MovementsWidget(QWidget):
         btn.setProperty("hover_color", hover_color)
         return btn
 
-
     def set_movement_type(self, mov_type):
         for btn in [self.btn_in, self.btn_out, self.btn_adjust]:
             btn.setChecked(False)
-            
+
             h_col = btn.property("hover_color")
-            
+
             btn.setStyleSheet(f"""
                 QPushButton {{
                     background-color: #2D2D30;
@@ -235,6 +245,11 @@ class MovementsWidget(QWidget):
                 self._filter_origin_locations(current_item_id)
             else:
                 self.combo_origin.clear()
+            current_item_id = self.combo_item.currentData()
+            if current_item_id:
+                self._filter_origin_locations(current_item_id)
+            else:
+                self.combo_origin.clear()
 
         elif mov_type == "ADJUST":
             active_btn = self.btn_adjust
@@ -247,6 +262,11 @@ class MovementsWidget(QWidget):
                 "damage",
                 "relocation",
             ])
+            current_item_id = self.combo_item.currentData()
+            if current_item_id:
+                self._filter_origin_locations(current_item_id)
+            else:
+                self.combo_origin.clear()
             current_item_id = self.combo_item.currentData()
             if current_item_id:
                 self._filter_origin_locations(current_item_id)
@@ -272,12 +292,12 @@ class MovementsWidget(QWidget):
     def update_reasons(self, reason_keys):
         self.combo_reason.clear()
         for key in reason_keys:
-            label = MOV_REASON_ES.get(key, key) 
+            label = MOV_REASON_ES.get(key, key)
             self.combo_reason.addItem(label, userData=key)
 
     def load_locations(self):
         locations = Location.get_all_locations_for_combo()
-        
+
         self.combo_origin.clear()
         self.combo_dest.clear()
         
@@ -443,11 +463,13 @@ class MovementsWidget(QWidget):
         dest_id = self.combo_dest.currentData()
             
         if qty <= 0:
-            QMessageBox.warning(self, "Error", "La cantidad debe ser mayor a 0.")
+            QMessageBox.warning(
+                self, "Error", "La cantidad debe ser mayor a 0.")
             return
 
         if not reason:
-            QMessageBox.warning(self, "Faltan datos", "Debes seleccionar un motivo.")
+            QMessageBox.warning(self, "Faltan datos",
+                                "Debes seleccionar un motivo.")
             return
 
 
@@ -456,13 +478,15 @@ class MovementsWidget(QWidget):
 
         if mov_type == "IN":
             if not dest_id:
-                QMessageBox.warning(self, "Faltan datos", "Para una Entrada, seleccione Ubicación Destino.")
+                QMessageBox.warning(
+                    self, "Faltan datos", "Para una Entrada, seleccione Ubicación Destino.")
                 return
             final_to = dest_id
 
         elif mov_type == "OUT":
             if not origin_id:
-                QMessageBox.warning(self, "Faltan datos", "Para una Salida, seleccione Ubicación Origen.")
+                QMessageBox.warning(
+                    self, "Faltan datos", "Para una Salida, seleccione Ubicación Origen.")
                 return
             final_from = origin_id
 
@@ -506,7 +530,7 @@ class MovementsWidget(QWidget):
                 from_location_id=final_from,
                 to_location_id=final_to
             )
-            
+
             new_id = movement.save()
             
             QMessageBox.information(self, "Éxito", f"Movimiento registrado con ID {new_id}")
@@ -528,6 +552,7 @@ class MovementsWidget(QWidget):
             self._update_info_panel()
 
     def _on_clear(self):
+        self.combo_item.setCurrentIndex(0)
         self.combo_item.setCurrentIndex(0)
         self.spin_qty.setValue(1)
         if self.combo_origin.isEnabled(): self.combo_origin.setCurrentIndex(0)

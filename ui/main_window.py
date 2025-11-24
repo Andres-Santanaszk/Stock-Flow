@@ -31,23 +31,23 @@ class PlaceholderWidget(QFrame):
         super().__init__(parent)
         self.setFrameShape(QFrame.StyledPanel)
         self.setFrameShadow(QFrame.Raised)
-        
+
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignCenter)
 
         title_label = QLabel(f"Módulo: {title}")
         title_label.setFont(QFont("Segoe UI", 24, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
-        
-        role_label = QLabel(f"Acceso de Usuario Actual: <span style='color: #1E88E5;'>{user_role}</span>")
+
+        role_label = QLabel(
+            f"Acceso de Usuario Actual: <span style='color: #1E88E5;'>{user_role}</span>")
         role_label.setFont(QFont("Segoe UI", 14))
         role_label.setAlignment(Qt.AlignCenter)
         role_label.setStyleSheet("QLabel { margin-top: 15px; }")
-        
+
         layout.addWidget(title_label)
         layout.addWidget(role_label)
-        
-        
+
         self.setStyleSheet("""
             QFrame {
                 background-color: #3C3F41; /* Fondo ligeramente más oscuro que el fondo principal del tema */
@@ -56,6 +56,7 @@ class PlaceholderWidget(QFrame):
                 color: #ECEFF1; /* Asegura que el texto general sea claro */
             }
         """)
+
 
 class MainWindow(QMainWindow):
     def __init__(self, user=None):
@@ -80,7 +81,7 @@ class MainWindow(QMainWindow):
             print(f"DEBUG: Permisos: {self.current_user_permissions}")
         
         self._fade_anim = None
-        
+
         self._setup_styles()
         self._setup_ui()
         self._apply_role_permissions()
@@ -153,13 +154,12 @@ class MainWindow(QMainWindow):
                 fade_in.setStartValue(0.0)
                 fade_in.setEndValue(1.0)
 
-                def on_fade_in_finished():
-                    new_widget.setGraphicsEffect(None)
+            def on_fade_in_finished():
+                new_widget.setGraphicsEffect(None)
 
-                fade_in.finished.connect(on_fade_in_finished)
-                fade_in.start()
-                self._fade_anim = fade_in
-
+            fade_in.finished.connect(on_fade_in_finished)
+            fade_in.start()
+            self._fade_anim = fade_in
 
     def _setup_styles(self):
         self.setStyleSheet("""
@@ -201,7 +201,7 @@ class MainWindow(QMainWindow):
 
     def _setup_ui(self):
         """Configura el layout principal de la aplicación."""
-        
+
         central_widget = QWidget()
         main_layout = QHBoxLayout(central_widget)
         main_layout.setContentsMargins(0, 0, 0, 0)
@@ -215,7 +215,7 @@ class MainWindow(QMainWindow):
         self.sidebar_layout = QVBoxLayout(self.sidebar_frame)
         self.sidebar_layout.setContentsMargins(10, 0, 10, 10)
         self.sidebar_layout.setSpacing(8)
-        
+
         logo_widget = QSvgWidget(str(logo_path))
         logo_widget.setObjectName("HeaderLabel")
         logo_widget.setMaximumHeight(180)
@@ -226,8 +226,7 @@ class MainWindow(QMainWindow):
         self._setup_sidebar_buttons()
         self.sidebar_layout.addLayout(self.buttons_layout)
         self.sidebar_layout.addStretch()
-        
-        
+
         self._setup_user_info()
 
         main_layout.addWidget(self.sidebar_frame)
@@ -235,11 +234,11 @@ class MainWindow(QMainWindow):
         # central area
         self.stacked_widget = QStackedWidget()
         self.stacked_widget.setStyleSheet("QStackedWidget { padding: 5px; }")
-        
+
         self._setup_central_views()
-        
+
         main_layout.addWidget(self.stacked_widget)
-    
+
     def _setup_sidebar_buttons(self):
         """Define y conecta los botones de navegación."""
         self.buttons_layout = QVBoxLayout()
@@ -264,8 +263,8 @@ class MainWindow(QMainWindow):
         self.buttons = {}
         for key, (text, permission_id, icon_name) in self.button_map.items():
             btn = AnimatedButton(text, self,
-                                base_icon_size=QSize(24, 24),
-                                hover_icon_size=QSize(32, 32))
+                                 base_icon_size=QSize(24, 24),
+                                 hover_icon_size=QSize(32, 32))
             btn.setIcon(qta.icon(icon_name, color="white"))
             btn.setCursor(Qt.PointingHandCursor)
             btn.setCheckable(True)
@@ -275,9 +274,9 @@ class MainWindow(QMainWindow):
             
             self.buttons[key] = btn
             self.buttons_layout.addWidget(btn)
-            
+
         self.btn_dashboard = self.buttons["Dashboard"]
-    
+
     def _setup_user_info(self):
         """Configura la etiqueta de usuario y el botón de Logout."""
         user_info_frame = QFrame()
@@ -298,11 +297,12 @@ class MainWindow(QMainWindow):
         role_label = QLabel(f"Bienvenido, <b>{first_name}</b>")
         role_label.setFont(QFont("Segoe UI", 13))
         user_info_layout.addWidget(role_label)
-        
+
         btn_logout = QPushButton("Cerrar Sesión / Logout")
         btn_logout.clicked.connect(self._handle_logout)
-        btn_logout.setStyleSheet("QPushButton { background-color: #D32F2F; color: white; } QPushButton:hover { background-color: #EF5350; }")
-        
+        btn_logout.setStyleSheet(
+            "QPushButton { background-color: #D32F2F; color: white; } QPushButton:hover { background-color: #EF5350; }")
+
         user_info_layout.addWidget(btn_logout)
         self.sidebar_layout.addWidget(user_info_frame)
 
@@ -310,7 +310,7 @@ class MainWindow(QMainWindow):
         """Crea y añade los widgets al QStackedWidget."""
         self.view_widgets = {}
         for key, (title, permission_id, icon_name) in self.button_map.items():
-            if key == "Registrar_Item":  
+            if key == "Registrar_Item":
                 widget = RegisterHubWidget(self)
             elif key == "Movimientos de inventario": 
                 widget = MovementsWidget(self, self.current_user)
@@ -321,11 +321,10 @@ class MainWindow(QMainWindow):
             self.view_widgets[key] = widget
             self.stacked_widget.addWidget(widget)
 
-
     def _switch_view(self, key, checked):
-            """Maneja el cambio de vista en el QStackedWidget."""
-            if not checked:
-                return
+        """Maneja el cambio de vista en el QStackedWidget."""
+        if not checked:
+            return
 
             #desactivar todos los demas botones
             for other_key, btn in self.buttons.items():
@@ -336,7 +335,6 @@ class MainWindow(QMainWindow):
             if widget:
                 print(f"DEBUG: Cambiando a la vista: {key}")
                 self._animate_transition_to_widget(widget)        
-
 
     def _apply_role_permissions(self):
         """

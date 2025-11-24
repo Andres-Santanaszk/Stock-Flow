@@ -1,18 +1,18 @@
 from PySide6.QtWidgets import (
-    QWidget, QFormLayout, QLineEdit, QTextEdit, QPushButton,
-    QHBoxLayout, QVBoxLayout, QMessageBox, QComboBox, QCheckBox,
+    QWidget, QFormLayout, QLineEdit, QTextEdit, QComboBox, QPushButton, QMessageBox, QHBoxLayout, QVBoxLayout,
     QLabel, QFrame
 )
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QFont
-from entities.Category import Category
-from ui.translations import ITEM_CLASS_ES 
+from entities.Location import Location
+from ui.translations import LOCATION_TYPE_ES
 
-class CategoryFormWidget(QWidget):
+
+class LocationFormWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        title_label = QLabel("Registrar Categoría")
+        title_label = QLabel("Registrar Localizacion")
         title_label.setFont(QFont("Segoe UI", 20, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setObjectName("FormTitle")
@@ -20,32 +20,34 @@ class CategoryFormWidget(QWidget):
         form_layout = QFormLayout()
         form_layout.setLabelAlignment(Qt.AlignRight)
 
-        self.txtName = QLineEdit()
-        
-        self.cmbClass = QComboBox()
-        for en, es in ITEM_CLASS_ES.items():
-            self.cmbClass.addItem(es, userData=en)
+        self.txtCode = QLineEdit()
 
-        self.txtDesc = QTextEdit(); self.txtDesc.setFixedHeight(70)
+        self.txtDescription = QTextEdit()
+        self.txtDescription.setMinimumHeight(80)
 
-        form_layout.addRow("Nombre:", self.txtName)
-        form_layout.addRow("Tipo:", self.cmbClass)
-        form_layout.addRow("Descripción:", self.txtDesc)
+        self.cmbType = QComboBox()
+
+        for enum_val, es_val in LOCATION_TYPE_ES.items():
+            self.cmbType.addItem(es_val, userData=enum_val)
+
+        form_layout.addRow("Código:", self.txtCode)
+        form_layout.addRow("Tipo:", self.cmbType)
+        form_layout.addRow("Descripción:", self.txtDescription)
 
         card_form = QFrame()
         card_form.setObjectName("CardFrame")
         card_layout = QVBoxLayout(card_form)
-        
-        card_title = QLabel("Datos de la Categoría")
-        card_title.setObjectName("SectionTitle")
-        
-        card_layout.addWidget(card_title)
+
+        card_tittle = QLabel("Datos de la Localizacion")
+        card_tittle.setObjectName("SectionTitle")
+
+        card_layout.addWidget(card_tittle)
         card_layout.addLayout(form_layout)
         card_layout.addStretch()
 
-        self.btnSave = QPushButton("Guardar Categoría")
+        self.btnSave = QPushButton("Guardar Localizacion")
         self.btnSave.setObjectName("BtnSave")
-        
+
         self.btnClear = QPushButton("Limpiar")
         self.btnClear.setObjectName("BtnClear")
 
@@ -55,9 +57,6 @@ class CategoryFormWidget(QWidget):
         btns_layout.addWidget(self.btnSave, 2)
 
         root_layout = QVBoxLayout(self)
-        root_layout.setContentsMargins(20, 20, 20, 20)
-        root_layout.setSpacing(15)
-        
         root_layout.addWidget(title_label)
         root_layout.addWidget(card_form)
         root_layout.addStretch(1)
@@ -68,8 +67,6 @@ class CategoryFormWidget(QWidget):
         self.btnClear.clicked.connect(self._on_clear)
 
     def _apply_styles(self):
-        """ Aplica los QSS para el estilo de tarjetas """
-
         self.setStyleSheet("""
             #FormTitle {
                 color: #f7a51b;
@@ -119,31 +116,34 @@ class CategoryFormWidget(QWidget):
             }
         """)
 
-
     def _on_save(self):
-        name = self.txtName.text().strip()
-        cls_ = self.cmbClass.currentData()
-        desc = self.txtDesc.toPlainText().strip() or None
+        code = self.txtCode.text().strip()
+        tipe = self.cmbType.currentData()
+        desc = self.txtDescription.toPlainText().strip() or None
 
-        if not name or not cls_:
-            QMessageBox.warning(self, "Faltan datos", "Nombre y Clase son obligatorios.")
+        if not code or not tipe:
+            QMessageBox.warning(self, "Faltan datos",
+                                "El Código y el Tipo de locación son obligatorios.")
             return
-        cat_id = getattr(self, "current_id", None)
+        loc_id = getattr(self, "current_id", None)
         try:
-            new_category = Category(
-                id_category=cat_id,
-                name=name,
-                class_=cls_, 
-                description=desc,
+            new_location = Location(
+                code,
+                tipe,
+                desc,
+                True
             )
-            new_id = new_category.add_category()
-
-            QMessageBox.information(self, "Éxito", f"Categoría creada con ID {new_id}")
+            new_id = new_location.add_location()
+            QMessageBox.information(
+                self, "Éxito", f"Localización creada con el ID {new_id}")
             self._on_clear()
-            
         except Exception as e:
-            QMessageBox.critical(self, "Error", f"No se pudo guardar la categoría:\n{e}")
+            QMessageBox.critical(
+                self, "Error", f"No se pudo guardar la localización:\n{e}")
 
     def _on_clear(self):
-        self.txtName.clear(); self.txtDesc.clear()
-        if self.cmbClass.count() > 0: self.cmbClass.setCurrentIndex(0)
+        self.txtCode.clear()
+        self.txtDescription.clear()
+
+        if self.cmbType.count() > 0:
+            self.cmbType.setCurrentIndex(0)

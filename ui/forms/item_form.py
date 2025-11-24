@@ -206,13 +206,14 @@ class ItemFormWidget(QWidget):
         if not name or not sku:
             QMessageBox.warning(self, "Faltan datos", "Nombre y SKU son obligatorios.")
             return
-
+        item_id = getattr(self, "current_id", None)
         try:
             if Item.exists_sku(sku):
                 QMessageBox.warning(self, "Duplicado", f"El SKU '{sku}' ya existe.")
                 return
 
             item = Item(
+                id_item=item_id,
                 name=name, 
                 sku=sku, 
                 description=desc, 
