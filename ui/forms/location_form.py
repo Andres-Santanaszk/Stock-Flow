@@ -12,7 +12,7 @@ class LocationFormWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        title_label = QLabel("Registrar Localizacion")
+        title_label = QLabel("Registrar ubicacion")
         title_label.setFont(QFont("Segoe UI", 20, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setObjectName("FormTitle")

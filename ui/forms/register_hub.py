@@ -81,7 +81,7 @@ class RegisterHubWidget(QWidget):
         )
 
         self.btn_location = AnimatedHubButton(
-            "Registrar Locacion",
+            "Registrar ubicacion",
             BASE_DIR / "utils" / "add_location.svg",
             "folder-new",
         )
