@@ -17,6 +17,7 @@ from ui.utils.common_widgets import AnimatedButton
 from ui.forms.user_hub import UserHubWidget
 from entities.Role import Role
 from entities.Permission import Permission
+from ui.forms.edit_form import UpdateHubWidget
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -316,6 +317,8 @@ class MainWindow(QMainWindow):
                 widget = MovementsWidget(self, self.current_user)
             elif key == "Gestión de Roles":
                 widget = UserHubWidget(self)
+            elif key == "Administrar inventario":
+                widget = UpdateHubWidget(self)
             else:
                 widget = PlaceholderWidget(title, self.current_user_role)
             self.view_widgets[key] = widget
