@@ -22,8 +22,8 @@ class AnimatedHubButton(IconHoverAnimationMixin, QToolButton):
         icon_path,
         fallback_name,
         parent=None,
-        base_icon_size=QSize(125, 125),
-        hover_icon_size=QSize(150, 150),
+        base_icon_size=QSize(110, 110),
+        hover_icon_size=QSize(130, 130),
     ):
         super().__init__(parent)
 
