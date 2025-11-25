@@ -211,7 +211,7 @@ class view_item(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.lbl_title = QLabel("inventario")
+        self.lbl_title = QLabel("Inventario")
         self.lbl_title.setObjectName("MainTitle")
 
         self.txt_search = QLineEdit()
