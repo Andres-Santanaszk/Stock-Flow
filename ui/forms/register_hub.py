@@ -125,8 +125,8 @@ class RegisterHubWidget(QWidget):
                 margin-bottom: 20px;
             }
             QToolButton {
-                min-height: 260px;
-                min-width: 300px;
+                min-height: 250px;
+                min-width: 250px;
                 font: Segoe UI;
                 font-size: 18px;
                 font-weight: bold;
