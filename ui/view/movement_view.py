@@ -168,7 +168,7 @@ class view_movement(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.lbl_title = QLabel("Registro de Movimientos")
+        self.lbl_title = QLabel("Historial de Movimientos")
         self.lbl_title.setObjectName("MainTitle")
         self.lbl_subtitle = QLabel("Historial completo de transacciones.")
         self.lbl_subtitle.setObjectName("SubTitle")
