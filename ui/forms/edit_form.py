@@ -22,8 +22,8 @@ class AnimatedHubButton(IconHoverAnimationMixin, QToolButton):
         icon_path,
         fallback_name,
         parent=None,
-        base_icon_size=QSize(150, 150),
-        hover_icon_size=QSize(170, 170),
+        base_icon_size=QSize(125, 125),
+        hover_icon_size=QSize(150, 150),
     ):
         super().__init__(parent)
 
@@ -57,7 +57,7 @@ class SmartSquareButton(AnimatedHubButton):
         return True
 
     def heightForWidth(self, width):
-        return width
+        return int(width * 1.3)
 
     def resizeEvent(self, event):
         new_width = event.size().width()
