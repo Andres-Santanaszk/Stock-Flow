@@ -471,8 +471,7 @@ class MovementsWidget(QWidget):
             QMessageBox.warning(self, "Faltan datos",
                                 "Debes seleccionar un motivo.")
             return
-
-
+        
         final_from = None
         final_to = None
 
@@ -600,7 +599,7 @@ class MovementsWidget(QWidget):
             }
 
             QLabel#SubtitleLabel {
-                font-size: 24px;
+                font-size: 18px;
                 color: #ffffff;
             }
         """)
