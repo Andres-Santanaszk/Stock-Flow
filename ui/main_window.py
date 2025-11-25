@@ -71,7 +71,7 @@ class MainWindow(QMainWindow):
 
         self.setWindowTitle("Stock Flow")
         self.setWindowIcon(QIcon(str(icon_path)))
-        self.setWindowState(Qt.WindowMaximized)
+        self.setGeometry(100, 100, 1200, 800)
         
         if self.current_user:
             self.current_user_role = Role.get_name_by_id(self.current_user.role_id)

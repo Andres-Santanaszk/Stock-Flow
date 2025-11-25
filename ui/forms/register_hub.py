@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QDialog,
-    QLabel, QToolButton, QPushButton
+    QWidget, QVBoxLayout, QHBoxLayout, QGridLayout, QDialog,
+    QLabel, QToolButton, QPushButton, QSizePolicy
 )
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QIcon, QFont
@@ -38,10 +38,38 @@ class AnimatedHubButton(IconHoverAnimationMixin, QToolButton):
             icon = QIcon.fromTheme(fallback_name)
         self.setIcon(icon)
 
+        self.ratio_base = base_icon_size
+        self.ratio_hover = hover_icon_size
+
         self._setup_icon_hover_animation(
             base_icon_size=base_icon_size,
             hover_icon_size=hover_icon_size,
         )
+
+
+class SmartSquareButton(AnimatedHubButton):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Preferred)
+        self.setMinimumSize(160, 160)
+
+    def hasHeightForWidth(self):
+        return True
+
+    def heightForWidth(self, width):
+        return width
+
+    def resizeEvent(self, event):
+        new_width = event.size().width()
+        dynamic_size = int(new_width * 0.5)
+        
+        self.small_icon_size = QSize(dynamic_size, dynamic_size)
+        self.large_icon_size = QSize(dynamic_size + 20, dynamic_size + 20)
+        
+        if not self.underMouse():
+            self.setIconSize(self.small_icon_size)
+            
+        super().resizeEvent(event)
 
 
 class RegisterHubWidget(QWidget):
@@ -64,44 +92,39 @@ class RegisterHubWidget(QWidget):
         self.btn_update_link.setObjectName("LinkButton")
         self.btn_update_link.setCursor(Qt.PointingHandCursor)
 
-        self.btn_item = AnimatedHubButton(
+        self.btn_item = SmartSquareButton(
             "Registrar Ítem",
             BASE_DIR / "utils" / "add_item.svg",
             "list-add",
         )
-        self.btn_brand = AnimatedHubButton(
+        self.btn_brand = SmartSquareButton(
             "Registrar Marca",
             BASE_DIR / "utils" / "brands.svg",
             "bookmark-new",
         )
-        self.btn_category = AnimatedHubButton(
+        self.btn_category = SmartSquareButton(
             "Registrar Categoría",
             BASE_DIR / "utils" / "add_category.svg",
             "folder-new",
         )
-
-        self.btn_location = AnimatedHubButton(
+        self.btn_location = SmartSquareButton(
             "Registrar ubicacion",
             BASE_DIR / "utils" / "add_location.svg",
             "folder-new",
         )
 
-        top_row_layout = QHBoxLayout()
-        top_row_layout.setSpacing(40)
-        top_row_layout.addWidget(self.btn_item)
-        top_row_layout.addWidget(self.btn_brand)
-        top_row_layout.setAlignment(Qt.AlignCenter)
+        grid_layout = QGridLayout()
+        grid_layout.setSpacing(20)
+        
+        grid_layout.addWidget(self.btn_item, 0, 0)
+        grid_layout.addWidget(self.btn_brand, 0, 1)
+        grid_layout.addWidget(self.btn_category, 1, 0)
+        grid_layout.addWidget(self.btn_location, 1, 1)
 
-        bottom_row_layout = QHBoxLayout()
-        bottom_row_layout.setSpacing(40)
-        bottom_row_layout.addWidget(self.btn_category)
-        bottom_row_layout.addWidget(self.btn_location)
-        bottom_row_layout.setAlignment(Qt.AlignCenter)
-
-        buttons_container_layout = QVBoxLayout()
-        buttons_container_layout.addLayout(top_row_layout)
-        buttons_container_layout.addSpacing(30)
-        buttons_container_layout.addLayout(bottom_row_layout)
+        center_container = QWidget()
+        center_lay = QVBoxLayout(center_container)
+        center_lay.addLayout(grid_layout)
+        center_container.setMaximumWidth(900)
 
         main_layout = QVBoxLayout(self)
         main_layout.setAlignment(Qt.AlignCenter)
@@ -111,7 +134,7 @@ class RegisterHubWidget(QWidget):
         main_layout.addWidget(self.lbl_title)
         main_layout.addWidget(self.lbl_subtitle)
         main_layout.addStretch(1)
-        main_layout.addLayout(buttons_container_layout)
+        main_layout.addWidget(center_container, 0, Qt.AlignCenter)
         main_layout.addStretch(1)
         main_layout.addWidget(self.btn_update_link)
 
@@ -125,13 +148,11 @@ class RegisterHubWidget(QWidget):
                 margin-bottom: 20px;
             }
             QToolButton {
-                min-height: 250px;
-                min-width: 250px;
                 font: Segoe UI;
                 font-size: 18px;
                 font-weight: bold;
-                padding: 15px;
-                border-radius: 8px;
+                padding: 10px;
+                border-radius: 12px;
                 background-color: #3C3F41;
                 border: 1px solid #555555;
             }
