@@ -262,5 +262,5 @@ class DashboardWidget(QWidget):
         else:
              ax.text(0.5, 0.5, "Sin actividad de usuarios reciente", color="white", ha='center')
 
-        card = ChartCard("Actividad por Usuario", "Personal con mayor número de movimientos registrados", canvas)
+        card = ChartCard("Productividad por usuario", "Personal con mayor número de movimientos registrados", canvas)
         self.grid.addWidget(card, 1, 0, 1, 2)
