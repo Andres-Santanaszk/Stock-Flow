@@ -152,7 +152,6 @@ class UserInfoPanel(QFrame):
             self.lbl_status.setText("Usuario inactivo.")
             self.lbl_status.setStyleSheet("color: #e74c3c;")
 
-# --- 4. WIDGET PRINCIPAL ---
 class UserHubWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -177,16 +176,15 @@ class UserHubWidget(QWidget):
         self.btn_edit.setObjectName("BigBtn")
 
         controls_layout = QHBoxLayout()
-        controls_layout.addWidget(self.txt_search) # Buscador Izquierda
-        controls_layout.addStretch()               # Espacio flexible
-        controls_layout.addWidget(self.btn_add)    # Botones Derecha
+        controls_layout.addWidget(self.txt_search) 
+        controls_layout.addStretch()               
+        controls_layout.addWidget(self.btn_add)    
         controls_layout.addWidget(self.btn_edit)
 
-        # --- BODY LAYOUT (Fila 3: Tabla + Panel) ---
         body_layout = QHBoxLayout()
         body_layout.setSpacing(20) 
 
-        # Tabla
+        #Tabla
         self.table_frame = QFrame()
         self.table_frame.setObjectName("TableContainer")
         self.table_users = QTableWidget()
@@ -345,7 +343,6 @@ class UserHubWidget(QWidget):
             QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; }
         """)
 
-        # Conexiones
         self.btn_add.clicked.connect(self._open_add_user_dialog)
         self.btn_edit.clicked.connect(self._open_edit_user_dialog)
         self.table_users.itemSelectionChanged.connect(self._on_selection_changed)
@@ -369,7 +366,6 @@ class UserHubWidget(QWidget):
 
         is_active = active_text == "True"
 
-        # Enviamos todo al panel
         self.detail_panel.update_data(user_id, name, email, role, is_active)
 
     def filter_user_list(self, text):
@@ -407,12 +403,9 @@ class UserHubWidget(QWidget):
             QMessageBox.warning(self, "Error de selección", "Por favor, seleccione un usuario de la lista para continuar.")
             return
 
-        # Obtenemos el ID de la columna 0 (que usualmente está oculta o es la primera)
         row = selected_items[0].row()
         user_id = self.table_users.item(row, 0).text() 
-        
-        # Abrimos el Dialog pasando el ID
-        # Convertimos a int si tu DB espera int
+
         dialog = EditUserForm(int(user_id), self)
         
         if dialog.exec():

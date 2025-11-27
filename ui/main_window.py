@@ -21,6 +21,7 @@ from ui.forms.edit_form import UpdateHubWidget
 from ui.view.movement_view import view_movement
 from ui.view.location_view import view_location
 from ui.view.inventory_view import view_item
+from ui.view.dashboard_view import DashboardWidget
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -147,7 +148,7 @@ class MainWindow(QMainWindow):
                 border: none;
                 padding: 15px 10px;
                 text-align: left;
-                font-size: 18px;
+                font-size: 16px;
                 font-weight: 500;
                 border-radius: 5px;
                 color: white;
@@ -156,6 +157,7 @@ class MainWindow(QMainWindow):
                 background-color: #f7c774; 
                 color: black;
                 font-weight: bold;
+                font-size: 16px;
             }
             QPushButton:checked {
                 background-color: #f7a51b; 
@@ -232,9 +234,9 @@ class MainWindow(QMainWindow):
 
             "Gestión de Roles": ("Administrar usuarios", "users.manage", "mdi.account-cog"),
             
-            "Historial de Movimientos": ("Historial transacciones", "reports.view", "mdi.history"),
+            "Historial de Movimientos": ("Historial de movimientos", "reports.view", "mdi.history"),
             
-            "Administrar inventario": ("Catálogos", "catalogs.manage", "mdi.tag-outline")
+            "Administrar inventario": ("Modificar registros", "catalogs.manage", "mdi.tag-outline")
         }
 
         self.buttons = {}
@@ -301,6 +303,8 @@ class MainWindow(QMainWindow):
                 widget = view_item(self)
             elif key == "Historial de Movimientos":
                 widget = view_movement(self)
+            elif key == "Dashboard":
+                widget = DashboardWidget(self)
             else:
                 widget = PlaceholderWidget(title, self.current_user_role)
             self.view_widgets[key] = widget
