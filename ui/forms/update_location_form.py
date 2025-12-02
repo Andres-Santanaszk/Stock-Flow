@@ -16,38 +16,28 @@ class UpdateLocationForm(QWidget):
 
         self.current_id_location = None
 
-        # -------------------------------
-        # TÍTULO
-        # -------------------------------
         title_label = QLabel("Modificar Ubicación")
         title_label.setFont(QFont("Segoe UI", 20, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setObjectName("FormTitle")
 
-        # -------------------------------
-        # FORMULARIO
-        # -------------------------------
         form_layout = QFormLayout()
         form_layout.setLabelAlignment(Qt.AlignRight)
 
-        # --- BUSCADOR INTELIGENTE ---
         self.combo_search = QComboBox()
         self.combo_search.setEditable(True)
         self.combo_search.setInsertPolicy(QComboBox.NoInsert)
         self.combo_search.setPlaceholderText("Buscar por código...")
 
-        # Configuración del autocompletado
         completer = self.combo_search.completer()
         completer.setFilterMode(Qt.MatchContains)
         completer.setCompletionMode(QCompleter.PopupCompletion)
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         completer.activated.connect(self._on_completer_activated)
 
-        # --- CAMPOS DE DATOS ---
         self.txtCode = QLineEdit()
         
         self.cmbType = QComboBox()
-        # Cargar tipos desde traducciones
         for enum_val, es_val in LOCATION_TYPE_ES.items():
             self.cmbType.addItem(es_val, userData=enum_val)
 
@@ -57,16 +47,13 @@ class UpdateLocationForm(QWidget):
         self.btnActive = SwitchButton() 
         self.btnActive.setToolTip("Activar o Desactivar esta ubicacion")
         
-        # Agregar filas al formulario
+
         form_layout.addRow("<b>Buscar:</b>", self.combo_search)
         form_layout.addRow("Código:", self.txtCode)
         form_layout.addRow("Tipo:", self.cmbType)
         form_layout.addRow("Estado Activo:", self.btnActive)
         form_layout.addRow("Descripción:", self.txtDescription)
 
-        # -------------------------------
-        # TARJETA (CARD)
-        # -------------------------------
         card_form = QFrame()
         card_form.setObjectName("CardFrame")
         card_layout = QVBoxLayout(card_form)
@@ -78,9 +65,6 @@ class UpdateLocationForm(QWidget):
         card_layout.addLayout(form_layout)
         card_layout.addStretch()
 
-        # -------------------------------
-        # BOTONES
-        # -------------------------------
         self.btnSave = QPushButton("Actualizar Localización")
         self.btnSave.setObjectName("BtnSave")
 
@@ -92,9 +76,6 @@ class UpdateLocationForm(QWidget):
         btns_layout.addWidget(self.btnRestore, 1)
         btns_layout.addWidget(self.btnSave, 2)
 
-        # -------------------------------
-        # LAYOUT PRINCIPAL
-        # -------------------------------
         root_layout = QVBoxLayout(self)
         root_layout.setContentsMargins(20, 20, 20, 20)
         root_layout.setSpacing(15)
@@ -104,14 +85,12 @@ class UpdateLocationForm(QWidget):
         root_layout.addStretch(1)
         root_layout.addLayout(btns_layout)
 
-        # ESTILOS Y CONEXIONES
         self._apply_styles()
 
         self.combo_search.currentIndexChanged.connect(self._on_location_selected)
         self.btnSave.clicked.connect(self._on_save)
         self.btnRestore.clicked.connect(self._restore_data)
 
-        # Cargar datos iniciales
         self.load_locations_list()
         
     def _apply_styles(self):
@@ -172,12 +151,10 @@ class UpdateLocationForm(QWidget):
             }
         """)
 
-    # -------------------------------
-    # LÓGICA DE CARGA
-    # -------------------------------
+
     def load_locations_list(self):
         try:
-            # Necesitas este método en tu clase Location
+
             locations = Location.get_all_locations_for_combo()
 
             self.combo_search.blockSignals(True)
@@ -185,8 +162,7 @@ class UpdateLocationForm(QWidget):
             self.combo_search.addItem("Buscar código...", userData=None)
 
             for row in locations:
-                # row = (id_location, code)
-                # Mostramos el Código en el combo
+
                 self.combo_search.addItem(row[1], userData=row[0])
 
             self.combo_search.blockSignals(False)
@@ -210,14 +186,14 @@ class UpdateLocationForm(QWidget):
         if not self.current_id_location:
             return
         try:
-            # Necesitas este método en tu clase Location
+
             loc = Location.get_by_id(self.current_id_location)
             if loc:
                 self.txtCode.setText(loc.code)
                 self.txtDescription.setText(loc.description or "")
                 is_active = bool(loc.active) 
                 self.btnActive.setChecked(is_active)
-              #Seleciona tipo correcto  
+
             index = self.cmbType.findData(loc.type)
             if index >= 0:
                 self.cmbType.setCurrentIndex(index)
@@ -228,9 +204,6 @@ class UpdateLocationForm(QWidget):
     def _restore_data(self):
         self._load_location_data()
 
-    # -------------------------------
-    # GUARDAR
-    # -------------------------------
     def _on_save(self):
         if not self.current_id_location:
             QMessageBox.warning(self, "Atención", "Selecciona una localización primero.")
@@ -244,10 +217,8 @@ class UpdateLocationForm(QWidget):
             QMessageBox.warning(self, "Faltan datos", "El Código y el Tipo son obligatorios.")
             return
 
-        # --- INICIO DE LA NUEVA VALIDACIÓN ---
-        # Si el usuario intenta desactivar (Check Box desmarcado)
         if not self.btnActive.isChecked():
-            # Verificamos si hay cosas guardadas en esta ubicación
+
             if ItemLocation.has_stock_in_location(self.current_id_location):
                 QMessageBox.warning(
                     self, 
@@ -260,7 +231,7 @@ class UpdateLocationForm(QWidget):
                 return
 
         try:
-            # Creamos objeto Location con el ID existente
+
             location = Location(
                 id_location=self.current_id_location,
                 code=code,
@@ -269,12 +240,10 @@ class UpdateLocationForm(QWidget):
                 active=self.btnActive.isChecked()
             )
 
-            # Necesitas este método en tu clase Location
             location.update()
 
             QMessageBox.information(self, "Éxito", "Localización actualizada correctamente.")
             self._clear_form()
-            # Recargar la lista (por si cambió el código)
             self.combo_search.blockSignals(True)
             self._clear_form()
             self.load_locations_list()

@@ -16,12 +16,11 @@ class AddUserForm(QDialog):
         self.setModal(True)
         self.setMinimumWidth(450)
         
-        # --- UI LAYOUT ---
+
         self.layout = QVBoxLayout(self)
         self.layout.setContentsMargins(30, 30, 30, 30)
         self.layout.setSpacing(15)
 
-        # Header
         lbl_title = QLabel("REGISTRAR USUARIO")
         lbl_title.setObjectName("DialogTitle")
         lbl_title.setAlignment(Qt.AlignCenter)
@@ -32,7 +31,6 @@ class AddUserForm(QDialog):
         line.setFrameShape(QFrame.HLine)
         self.layout.addWidget(line)
 
-        # Formulario
         self.form_layout = QFormLayout()
         self.form_layout.setVerticalSpacing(15)
         self.form_layout.setHorizontalSpacing(20)
@@ -72,7 +70,6 @@ class AddUserForm(QDialog):
         self.layout.addLayout(self.form_layout)
         self.layout.addSpacing(20)
 
-        # Botones
         btn_layout = QHBoxLayout()
         
         self.btn_cancel = QPushButton("Cancelar")
@@ -97,7 +94,6 @@ class AddUserForm(QDialog):
         self.apply_styles()
 
     def apply_styles(self):
-        # Mismos estilos definidos anteriormente...
         self.setStyleSheet("""
             QDialog { background-color: #3c3f41; }
             #DialogTitle { color: #f7a51b; font-size: 24px; font-weight: 800; font-family: "Segoe UI"; }
@@ -120,7 +116,6 @@ class AddUserForm(QDialog):
         """)
         
     def _on_save(self):
-        # 1. Extracción directa de variables
         name = self.txt_name.text().strip()
         email = self.txt_email.text().strip().lower()
         raw_pass = self.txt_pass.text()
@@ -128,7 +123,6 @@ class AddUserForm(QDialog):
         
         role_id = self.cmb_role.currentData()
 
-        # 2. Validaciones de UI
         if not name or not email or not raw_pass:
             QMessageBox.warning(self, "Faltan datos", "Nombre, email y contraseña son obligatorios.")
             return
@@ -138,13 +132,10 @@ class AddUserForm(QDialog):
             return
 
         try:
-            # 3. Lógica de Negocio (Duplicados)
-            # Asumo que crearás este método estático igual que en Item.exists_sku(sku)
             if User.exists_email(email): 
                 QMessageBox.warning(self, "Duplicado", f"El correo '{email}' ya existe.")
                 return
-
-            # 4. Hashing
+            
             hashed_pw = hash_password(raw_pass)
 
             new_user = User(
@@ -158,7 +149,6 @@ class AddUserForm(QDialog):
             
             QMessageBox.information(self, "Éxito", f"Usuario creado con ID {new_id}")
             
-            # 7. Cerrar indicando éxito (Accepted)
             self.accept()
 
         except Exception as e:

@@ -1,4 +1,3 @@
-# db/create_db.py
 import psycopg2
 from psycopg2 import sql, OperationalError
 from config.settings import (

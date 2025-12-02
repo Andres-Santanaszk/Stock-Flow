@@ -58,14 +58,12 @@ class ItemLocation:
 
     @staticmethod
     def get_total_stock(id_item):
-        # Sumamos todas las cantidades de este ítem en todas las ubicaciones
         sql = "SELECT SUM(qty) FROM item_locations WHERE id_item = %s"
         conn = get_connection()
         try:
             cur = conn.cursor()
             cur.execute(sql, (id_item,))
             row = cur.fetchone()
-            # Si row[0] es None (no hay registros), devolvemos 0
             return row[0] if row and row[0] is not None else 0
         except Exception as e:
             print(f"Error getting total stock: {e}")
@@ -73,8 +71,6 @@ class ItemLocation:
         finally:
             cur.close()
             conn.close()
-    
-    # ... (código existente) ...
 
     @staticmethod
     def has_stock_in_location(id_location):
@@ -88,7 +84,6 @@ class ItemLocation:
             cur = conn.cursor()
             cur.execute(sql, (id_location,))
             row = cur.fetchone()
-            # Si encuentra algo, devuelve True
             return True if row else False
         except Exception as e:
             print(f"Error checking location stock: {e}")

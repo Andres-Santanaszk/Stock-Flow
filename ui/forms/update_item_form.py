@@ -18,17 +18,12 @@ class UpdateItemForm(QWidget):
         self.currentid_item = None
         self.original_sku = None
 
-        # -------------------------------
-        # TITULO
-        # -------------------------------
         title_label = QLabel("Modificar Ítem ")
         title_label.setFont(QFont("Segoe UI", 20, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setObjectName("FormTitle")
 
-        # -------------------------------
-        # FORMULARIOS PRINCIPALES
-        # -------------------------------
+
         info_layout = QFormLayout()
         info_layout.setLabelAlignment(Qt.AlignRight)
 
@@ -40,25 +35,21 @@ class UpdateItemForm(QWidget):
         self.combo_item.setEditable(True)
         self.combo_item.setInsertPolicy(QComboBox.NoInsert)
         self.combo_item.setPlaceholderText("Buscar por nombre o SKU...")
-        
-        # ============================================================
-        # ESTILO "MOVEMENTS WIDGET" (TU CÓDIGO SOLICITADO)
-        # ============================================================
+
         completer = self.combo_item.completer()
-        # Esto permite buscar texto en cualquier parte (ej: "a" encuentra "Holka")
+
         completer.setFilterMode(Qt.MatchContains) 
         completer.setCompletionMode(QCompleter.PopupCompletion)
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         
-        # Conectamos la activación manual del completer
+
         completer.activated.connect(self._on_completer_activated)
-        # ============================================================
+
 
         self.txtName = QLineEdit()
         self.txtSKU = QLineEdit()
         self.txtBarcode = QLineEdit()
 
-        #Boton de activo o desactivo
         self.txtDesc = QTextEdit()
         self.txtDesc.setMinimumHeight(80)
         self.btnActive = SwitchButton() 
@@ -78,7 +69,6 @@ class UpdateItemForm(QWidget):
         self.txtDesc = QTextEdit()
         self.txtDesc.setMinimumHeight(80)
 
-        # SECCIÓN INFO PRINCIPAL
         info_layout.addRow("Nombre:", self.txtName)
         info_layout.addRow("SKU:", self.txtSKU)
         info_layout.addRow("Código de barras:", self.txtBarcode)
@@ -89,9 +79,6 @@ class UpdateItemForm(QWidget):
         stock_layout.addRow("Tipo de empaque:", self.cmbPack)
         stock_layout.addRow("Cantidad mínima:", self.spnMinQty)
 
-        # -------------------------------
-        # TARJETAS
-        # -------------------------------
         card_info = QFrame()
         card_info.setObjectName("CardFrame")
         card_info_layout = QVBoxLayout(card_info)
@@ -117,9 +104,6 @@ class UpdateItemForm(QWidget):
         card_desc_layout.addWidget(card_title_desc)
         card_desc_layout.addWidget(self.txtDesc)
 
-        # -------------------------------
-        # BOTONES
-        # -------------------------------
         self.btnSave = QPushButton("Actualizar Ítem")
         self.btnSave.setObjectName("BtnSave")
 
@@ -149,9 +133,6 @@ class UpdateItemForm(QWidget):
 
         self._apply_styles()
 
-        # -------------------------------
-        # CONEXIONES
-        # -------------------------------
         self.combo_item.currentIndexChanged.connect(self._on_item_selected)
         self.btnSave.clicked.connect(self._on_save)
         self.btnClear.clicked.connect(self._restore_selected_item)
@@ -160,9 +141,7 @@ class UpdateItemForm(QWidget):
         self._load_combos()
         self.load_items_for_search()
 
-    # -------------------------------
-    # ESTILOS
-    # -------------------------------
+
     def _apply_styles(self):
         self.setStyleSheet("""
             #FormTitle {
@@ -221,9 +200,7 @@ class UpdateItemForm(QWidget):
             }
         """)
 
-    # -------------------------------
-    # CARGA DE COMBOS
-    # -------------------------------
+
     def _load_combos(self):
         try:
             self.cmbBrand.clear()
@@ -240,9 +217,7 @@ class UpdateItemForm(QWidget):
         except Exception as e:
             QMessageBox.critical(self, "Error", f"No se pudieron cargar combos:\n{e}")
 
-    # -------------------------------
-    # BUSCADOR (IGUAL QUE EN MOVEMENTSWIDGET)
-    # -------------------------------
+
     def load_items_for_search(self):
         items = Item.search_items_for_display("", limit=1000)
 
@@ -259,9 +234,7 @@ class UpdateItemForm(QWidget):
 
         self.combo_item.blockSignals(False)
 
-    # -------------------------------
-    # EVENTO DEL COMPLETER (NUEVO)
-    # -------------------------------
+
     def _on_completer_activated(self, text):
         """Maneja la selección desde el menú desplegable del autocompletado"""
         if not text:
@@ -270,12 +243,7 @@ class UpdateItemForm(QWidget):
         index = self.combo_item.findText(text)
         if index >= 0:
             self.combo_item.setCurrentIndex(index)
-            # Al setear el index, se dispara automáticamente currentIndexChanged
-            # el cual llama a _on_item_selected
 
-    # -------------------------------
-    # SELECCIÓN DESDE COMBO
-    # -------------------------------
     def _on_item_selected(self, index):
         id_item = self.combo_item.itemData(index)
         if not id_item:
@@ -284,9 +252,7 @@ class UpdateItemForm(QWidget):
         self.currentid_item = id_item
         self._load_item_data()
 
-    # -------------------------------
-    # CARGAR DATOS DEL ÍTEM
-    # -------------------------------
+
     def _load_item_data(self):
         try:
             if not self.currentid_item:
@@ -320,9 +286,6 @@ class UpdateItemForm(QWidget):
                 return
         combo.setCurrentIndex(0)
 
-    # -------------------------------
-    # GUARDAR
-    # -------------------------------
     def _on_save(self):
         # Validación extra por si escribieron texto pero no seleccionaron del combo
         if not self.currentid_item:
@@ -380,7 +343,7 @@ class UpdateItemForm(QWidget):
             
             QMessageBox.information(self, "Éxito", "Ítem actualizado correctamente.")
             self._clear_form()
-            # Opcional: Refrescar la lista para mostrar nuevo nombre/SKU
+
             self.load_items_for_search()
 
         except Exception as e:

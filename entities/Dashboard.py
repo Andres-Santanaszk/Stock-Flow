@@ -24,7 +24,7 @@ class DashboardService:
             conn = get_connection()
             with conn.cursor() as cur:
                 cur.execute(sql)
-                return cur.fetchall() # [(Category, Count), ...]
+                return cur.fetchall() 
         except Exception as e:
             print(f"Error fetching categories: {e}")
             return []
@@ -56,7 +56,7 @@ class DashboardService:
             conn = get_connection()
             with conn.cursor() as cur:
                 cur.execute(sql)
-                return cur.fetchall() # [(Name, Min, Current), ...]
+                return cur.fetchall()
         except Exception as e:
             print(f"Error fetching critical stock: {e}")
             return []

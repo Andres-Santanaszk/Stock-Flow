@@ -165,7 +165,6 @@ class MovementsWidget(QWidget):
         info_layout.addWidget(self.lbl_current_stock)
         info_layout.addStretch()
 
-        # Add frames to main layout
         main_layout.addWidget(self.form_frame, 70) 
         main_layout.addWidget(self.info_frame, 30) 
 
@@ -502,7 +501,7 @@ class MovementsWidget(QWidget):
                     QMessageBox.warning(self, "Faltan datos", "Para una 'Reubicación', la Ubicación Destino es obligatoria.")
                     return
                 
-                # CASO B: Si es Scrap/Daño, advertir que se eliminará (Hard Delete)
+
                 else:
                     msg = (
                         "No ha seleccionado destino.\n\n"
@@ -513,8 +512,7 @@ class MovementsWidget(QWidget):
                     
                     if reply == QMessageBox.No:
                         return
-                    # Si dice Yes, final_to se queda como None
-            
+
             final_from = origin_id
             final_to = dest_id if dest_id else None
 

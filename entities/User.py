@@ -110,14 +110,11 @@ class User:
         try:
             cur = conn.cursor()
             cur.execute(sql, (email,))
-            
-            # Fetchone devuelve una tupla, ej: (1,) o (0,)
             count = cur.fetchone()[0]
             
             return count > 0
             
         except Exception as e:
-            # Es buena práctica loggear el error, pero aquí lo propagamos
             print(f"Error checking email: {e}") 
             raise e
         finally:

@@ -15,37 +15,29 @@ class UpdateCategoryForm(QWidget):
 
         self.current_id_category = None
 
-        # -------------------------------
-        # TÍTULO
-        # -------------------------------
         title_label = QLabel("Modificar Categoría")
         title_label.setFont(QFont("Segoe UI", 20, QFont.Bold))
         title_label.setAlignment(Qt.AlignCenter)
         title_label.setObjectName("FormTitle")
 
-        # -------------------------------
-        # FORMULARIO
-        # -------------------------------
+
         form_layout = QFormLayout()
         form_layout.setLabelAlignment(Qt.AlignRight)
 
-        # --- BUSCADOR INTELIGENTE ---
         self.combo_search = QComboBox()
         self.combo_search.setEditable(True)
         self.combo_search.setInsertPolicy(QComboBox.NoInsert)
         self.combo_search.setPlaceholderText("Buscar categoría...")
         
-        # Configuración del autocompletado
         completer = self.combo_search.completer()
         completer.setFilterMode(Qt.MatchContains)
         completer.setCompletionMode(QCompleter.PopupCompletion)
         completer.setCaseSensitivity(Qt.CaseInsensitive)
         completer.activated.connect(self._on_completer_activated)
 
-        # --- CAMPOS DE DATOS ---
+
         self.txtName = QLineEdit()
-        
-        # Combo para Tipo/Clase (Misma lógica que en el Create)
+
         self.cmbClass = QComboBox()
         for en, es in ITEM_CLASS_ES.items():
             self.cmbClass.addItem(es, userData=en)
@@ -55,17 +47,14 @@ class UpdateCategoryForm(QWidget):
         #boton
         self.btnActive = SwitchButton() 
         self.btnActive.setToolTip("Activar o Desactivar este categoria")
-        
-        # Agregar filas
+
         form_layout.addRow("<b>Buscar:</b>", self.combo_search)
         form_layout.addRow("Nombre:", self.txtName)
         form_layout.addRow("Tipo:", self.cmbClass)
         form_layout.addRow("Estado Activo:", self.btnActive)
         form_layout.addRow("Descripción:", self.txtDesc)
 
-        # -------------------------------
-        # TARJETA (CARD)
-        # -------------------------------
+
         card_form = QFrame()
         card_form.setObjectName("CardFrame")
         card_layout = QVBoxLayout(card_form)
@@ -77,9 +66,7 @@ class UpdateCategoryForm(QWidget):
         card_layout.addLayout(form_layout)
         card_layout.addStretch()
 
-        # -------------------------------
-        # BOTONES
-        # -------------------------------
+
         self.btnSave = QPushButton("Actualizar Categoría")
         self.btnSave.setObjectName("BtnSave")
         
@@ -91,9 +78,6 @@ class UpdateCategoryForm(QWidget):
         btns_layout.addWidget(self.btnRestore, 1)
         btns_layout.addWidget(self.btnSave, 2)
 
-        # -------------------------------
-        # LAYOUT PRINCIPAL
-        # -------------------------------
         root_layout = QVBoxLayout(self)
         root_layout.setContentsMargins(20, 20, 20, 20)
         root_layout.setSpacing(15)
@@ -103,14 +87,12 @@ class UpdateCategoryForm(QWidget):
         root_layout.addStretch(1)
         root_layout.addLayout(btns_layout)
 
-        # ESTILOS Y CONEXIONES
         self._apply_styles()
         
         self.combo_search.currentIndexChanged.connect(self._on_category_selected)
         self.btnSave.clicked.connect(self._on_save)
         self.btnRestore.clicked.connect(self._restore_data)
 
-        # Cargar datos iniciales
         self.load_categories_list()
 
     def _apply_styles(self):
@@ -171,12 +153,10 @@ class UpdateCategoryForm(QWidget):
             }
         """)
 
-    # -------------------------------
-    # LÓGICA DE CARGA
-    # -------------------------------
+
     def load_categories_list(self):
         try:
-            # Necesitas este método en tu clase Category
+
             categories = Category.get_all_categories()
             
             self.combo_search.blockSignals(True)
@@ -184,7 +164,7 @@ class UpdateCategoryForm(QWidget):
             self.combo_search.addItem("Buscar categoría...", userData=None)
             
             for row in categories:
-                # row = (id_category, name)
+
                 self.combo_search.addItem(row[1], userData=row[0])
                 
             self.combo_search.blockSignals(False)
@@ -208,14 +188,14 @@ class UpdateCategoryForm(QWidget):
         if not self.current_id_category:
             return
         try:
-            # Necesitas este método en tu clase Category
+
             cat = Category.get_by_id(self.current_id_category)
             if cat:
                 self.txtName.setText(cat.name)
                 self.txtDesc.setText(cat.description or "")
                 is_active = bool(cat.active) 
                 self.btnActive.setChecked(is_active)
-                #Selecionar tipo
+
                 index = self.cmbClass.findData(cat.class_)
                 if index >= 0:
                     self.cmbClass.setCurrentIndex(index)
@@ -232,10 +212,7 @@ class UpdateCategoryForm(QWidget):
     
     def _restore_data(self):
         self._load_category_data()
-
-    # -------------------------------
-    # GUARDAR
-    # -------------------------------
+        
     def _on_save(self):
         if not self.current_id_category:
             QMessageBox.warning(self, "Atención", "Selecciona una categoría primero.")
@@ -249,10 +226,7 @@ class UpdateCategoryForm(QWidget):
             QMessageBox.warning(self, "Faltan datos", "Nombre y Tipo son obligatorios.")
             return
 
-        # --- INICIO DE LA NUEVA VALIDACIÓN ---
-        # Si el usuario está intentando desactivar la categoría (el botón NO está checkeado)
         if not self.btnActive.isChecked():
-            # Verificamos si hay productos dentro
             if Category.has_associated_items(self.current_id_category):
                 QMessageBox.warning(
                     self, 
@@ -260,7 +234,6 @@ class UpdateCategoryForm(QWidget):
                     "No puedes desactivar esta categoría porque tiene productos asociados.\n"
                     "Debes mover o eliminar los productos antes de desactivar la categoría."
                 )
-                # Opcional: Volver a activar el botón visualmente para que el usuario entienda
                 self.btnActive.setChecked(True) 
                 self._clear_form()
                 self.load_categories_list()
@@ -274,13 +247,11 @@ class UpdateCategoryForm(QWidget):
                 description=desc,
                 active=self.btnActive.isChecked()
             )
-            
-            # Necesitas este método en tu clase Category
+
             category.update()
             
             QMessageBox.information(self, "Éxito", "Categoría actualizada correctamente.")
             self._clear_form()
-            # Recargar lista para refrescar nombres
             self.combo_search.blockSignals(True)
             self._clear_form()
             self.load_categories_list()

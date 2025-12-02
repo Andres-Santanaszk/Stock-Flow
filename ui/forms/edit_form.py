@@ -92,7 +92,6 @@ class UpdateHubWidget(QWidget):
         self.btn_register_link.setObjectName("LinkButton")
         self.btn_register_link.setCursor(Qt.PointingHandCursor)
 
-        # Usamos SmartSquareButton igual que en el archivo que funciona
         self.btn_item = SmartSquareButton(
             "Modificar Ítem",
             BASE_DIR / "utils" / "add_item.svg",
@@ -122,12 +121,11 @@ class UpdateHubWidget(QWidget):
         grid_layout.addWidget(self.btn_category, 1, 0)
         grid_layout.addWidget(self.btn_location, 1, 1)
 
-        # --- AQUÍ ESTÁ LA LÓGICA DEL CONTAINER QUE FALTABA ---
         center_container = QWidget()
         center_lay = QVBoxLayout(center_container)
         center_lay.addLayout(grid_layout)
         center_container.setMaximumWidth(900) 
-        # -----------------------------------------------------
+
 
         main_layout = QVBoxLayout(self)
         main_layout.setAlignment(Qt.AlignCenter)
@@ -137,8 +135,7 @@ class UpdateHubWidget(QWidget):
         main_layout.addWidget(self.lbl_title)
         main_layout.addWidget(self.lbl_subtitle)
         main_layout.addStretch(1)
-        
-        # Agregamos el container centrado, igual que en RegisterHub
+
         main_layout.addWidget(center_container, 0, Qt.AlignCenter)
         
         main_layout.addStretch(1)

@@ -141,19 +141,17 @@ class EditUserForm(QDialog):
         role_id = self.cmb_role.currentData()
         is_active = self.chk_active.isChecked()
 
-        # 2. Validaciones Básicas
         if not name or not email:
             QMessageBox.warning(self, "Faltan datos", "El nombre y el email no pueden estar vacíos.")
             return
 
-        # 3. Lógica de Contraseña (Opcional)
-        final_hash = self.current_user.password_hash # Por defecto, mantenemos la anterior
+        final_hash = self.current_user.password_hash 
         
-        if new_pass: # Solo si el usuario escribió algo
+        if new_pass:
             if new_pass != confirm_pass:
                 QMessageBox.warning(self, "Error", "Las nuevas contraseñas no coinciden.")
                 return
-            final_hash = hash_password(new_pass) # Hasheamos la nueva
+            final_hash = hash_password(new_pass) 
 
         try:
             if email != self.current_user.email and User.exists_email(email):
@@ -168,8 +166,7 @@ class EditUserForm(QDialog):
                 active=is_active,
                 role_id=role_id
             )
-            
-            # 6. Llamada a Update
+
             user_to_update.update()
             
             QMessageBox.information(self, "Éxito", "Usuario actualizado correctamente.")
