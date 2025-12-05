@@ -1,4 +1,4 @@
-# 📦 **Stock Flow**
+#  **Stock Flow**
 
 **Aplicación de escritorio profesional para control de inventario, movimientos, auditoría, usuarios y reportes gráficos.**
 
@@ -6,7 +6,7 @@ Construida con **Python + PySide6**, conectada a **PostgreSQL**, e incluye un si
 
 ---
 
-## 🛠️ **Tecnologías principales**
+## **Tecnologías principales**
 
 - **Python 3.10+**
 - **PySide6 + QtAwesome + QDarkTheme** (UI moderna con tema oscuro)
@@ -17,20 +17,20 @@ Construida con **Python + PySide6**, conectada a **PostgreSQL**, e incluye un si
 
 ## **Características principales**
 
-### 🔐 **Autenticación y seguridad**
+###  **Autenticación y seguridad**
 
 - Login seguro con **bcrypt** (`security/hashing.py`)
 - Manejo de sesiones
 - Modelo sólido de **roles** y **permisos** (`entities.Role`, `entities.Permission`)
 
-### 🧭 **Interfaz moderna**
+###  **Interfaz moderna**
 
 - Tema oscuro con transiciones animadas
 - Menú lateral dinámico (se oculta según permisos)
 - Animaciones suaves entre vistas
 - UI diseñada con PySide6 (Qt Widgets)
 
-### 📊 **Dashboard con gráficas**
+###  **Dashboard con gráficas**
 
 Implementado en `ui/view/dashboard_view.py` + `entities/Dashboard.py`:
 
@@ -39,20 +39,20 @@ Implementado en `ui/view/dashboard_view.py` + `entities/Dashboard.py`:
 - Top usuarios por actividad
 - Datos seed listos para demo
 
-### 📦 **Gestión completa de inventario**
+###  **Gestión completa de inventario**
 
 - CRUD de ítems, categorías, marcas y ubicaciones (`ui/forms/register_hub.py`)
 - Vistas de inventario por ubicación
 - Validación de stock y lógica de “no negativos”
 
-### 🔄 **Movimientos de inventario inteligentes**
+###  **Movimientos de inventario inteligentes**
 
 - Tipos IN / OUT / ADJUST
 - Autocompletado de ítems
 - Validación de origen/destino
 - Modelo de datos soportado con **triggers y vistas Postgres**
 
-### 👥 **Gestión de usuarios**
+###  **Gestión de usuarios**
 
 - Crear / editar usuarios
 - Asignar roles y permisos
@@ -60,7 +60,7 @@ Implementado en `ui/view/dashboard_view.py` + `entities/Dashboard.py`:
 
 ---
 
-## 🗄️ **Modelo de datos para Postgres**
+##  **Modelo de datos para Postgres**
 
 Implementación avanzada con:
 
@@ -81,7 +81,7 @@ El proyecto incluye un `docker-compose.yml` que levanta:
 
 ---
 
-## ⚡ **Cómo ejecutar el proyecto (modo desarrollo)**
+##  **Cómo ejecutar el proyecto (modo desarrollo)**
 
 ### 1. Crear entorno virtual
 
@@ -137,7 +137,7 @@ python main.py
 
 ---
 
-## 🖼️ Screenshots - Stock Flow
+## Screenshots - Stock Flow
 
 <img width="855" height="581" alt="Screenshot 2025-12-01 230530" src="https://github.com/user-attachments/assets/888da39c-6052-4263-a2e2-28032852905a" />
 <img width="1385" height="829" alt="image" src="https://github.com/user-attachments/assets/0396b474-b637-40c9-a028-3ea4429e5175" />
@@ -152,11 +152,10 @@ python main.py
 ---
 
 
-## 📥 **Descargas**
+## **Descargas**
 
 Descarga la última versión:
-
-👉 **https://github.com/Andres-Santanaszk/Stock-Flow/releases/latest**
+ **https://github.com/Andres-Santanaszk/Stock-Flow/releases/latest**
 
 Archivos disponibles:
 
