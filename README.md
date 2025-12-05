@@ -72,7 +72,7 @@ Implementación avanzada con:
 
 ---
 
-## 🐳 **Levantando la base de datos con Docker**
+## **Levantando la base de datos con Docker**
 
 El proyecto incluye un `docker-compose.yml` que levanta:
 
