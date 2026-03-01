@@ -1,140 +1,111 @@
-#  **Stock Flow**
+## **Stock Flow**
 
-**Aplicación de escritorio profesional para control de inventario, movimientos, auditoría, usuarios y reportes gráficos.**
+**Professional desktop application for inventory control, movements, auditing, user management, and graphical reporting.** Built with **Python + PySide6**, connected to **PostgreSQL**, and featuring a comprehensive **Roles and Permissions** system.
 
-Construida con **Python + PySide6**, conectada a **PostgreSQL**, e incluye un sistema completo de **roles y permisos**.
-
----
-
-## **Tecnologías principales**
+### **Core Technologies**
 
 - **Python 3.10+**
-- **PySide6 + QtAwesome + QDarkTheme** (UI moderna con tema oscuro)
-- **PostgreSQL 16** (se levanta vía Docker)
-- **bcrypt** para contraseñas seguras
-- **Matplotlib** para dashboards y gráficas
----
-
-## **Características principales**
-
-###  **Autenticación y seguridad**
-
-- Login seguro con **bcrypt** (`security/hashing.py`)
-- Manejo de sesiones
-- Modelo sólido de **roles** y **permisos** (`entities.Role`, `entities.Permission`)
-
-###  **Interfaz moderna**
-
-- Tema oscuro con transiciones animadas
-- Menú lateral dinámico (se oculta según permisos)
-- Animaciones suaves entre vistas
-- UI diseñada con PySide6 (Qt Widgets)
-
-###  **Dashboard con gráficas**
-
-Implementado en `ui/view/dashboard_view.py` + `entities/Dashboard.py`:
-
-- Distribución por categoría
-- Alertas de stock crítico
-- Top usuarios por actividad
-- Datos seed listos para demo
-
-###  **Gestión completa de inventario**
-
-- CRUD de ítems, categorías, marcas y ubicaciones (`ui/forms/register_hub.py`)
-- Vistas de inventario por ubicación
-- Validación de stock y lógica de “no negativos”
-
-###  **Movimientos de inventario inteligentes**
-
-- Tipos IN / OUT / ADJUST
-- Autocompletado de ítems
-- Validación de origen/destino
-- Modelo de datos soportado con **triggers y vistas Postgres**
-
-###  **Gestión de usuarios**
-
-- Crear / editar usuarios
-- Asignar roles y permisos
-- Vista especializada para administración (`ui/forms/user_hub.py`)
+- **PySide6 + QtAwesome + QDarkTheme** (Modern UI with dark mode support)
+- **PostgreSQL 16** (Deployed via Docker)
+- **bcrypt** for secure password hashing
+- **Matplotlib** for interactive dashboards and analytics
 
 ---
 
-##  **Modelo de datos para Postgres**
+### **Key Features**
 
-Implementación avanzada con:
+### **Authentication & Security**
 
-- **Enums** para tipos de movimiento
-- **Triggers** que actualizan stock automáticamente
-- **Vistas** para reportar disponibilidad real
-- Recalculo en `item_locations`
-- Lógica para **evitar stock negativo**
+- Secure login using **bcrypt** (`security/hashing.py`).
+- Session management.
+- Robust **RBAC (Role-Based Access Control)** and permissions model (`entities.Role`, `entities.Permission`).
+
+### **Modern Interface**
+
+- Dark theme with animated transitions.
+- Dynamic side menu (toggles based on user permissions).
+- Smooth UI animations powered by **PySide6 (Qt Widgets)**.
+
+### **Dashboard & Analytics**
+
+- Categorized distribution charts.
+- Critical stock alerts.
+- Top users by activity level.
+- Ready-to-use **seed data** for demos.
+
+### **Comprehensive Inventory Management**
+
+- **CRUD** operations for items, categories, brands, and locations.
+- Inventory views filtered by location.
+- Stock validation and "no-negative" logic.
+
+### **Smart Inventory Movements**
+
+- Movement types: **IN / OUT / ADJUST**.
+- Item auto-complete functionality.
+- Source/Destination validation.
+- PostgreSQL **triggers and views** for real-time data integrity.
+
+### **User Management**
+
+- Create and edit user profiles.
+- Assign specific roles and permissions.
+- Dedicated administrative view (`ui/forms/user_hub.py`).
 
 ---
 
-## **Levantando la base de datos con Docker**
+### **Advanced Database Implementation**
 
-El proyecto incluye un `docker-compose.yml` que levanta:
-
-- PostgreSQL
-- Adminer (UI web para DB) → [http://localhost:8080](http://localhost:8080/)
+- **Enums** for movement types.
+- **Triggers** for automatic stock updates.
+- **Database Views** for reporting real-time availability.
+- Automatic recalculation in `item_locations`.
+- Server-side logic to prevent negative stock.
 
 ---
 
-##  **Cómo ejecutar el proyecto (modo desarrollo)**
+### **Setting Up the Database with Docker**
 
-### 1. Crear entorno virtual
+The project includes a `docker-compose.yml` file to deploy:
 
-```bash
-python -m venv venv
-.\venv\Scripts\activate
+1. **PostgreSQL**
+2. **Adminer** (Web-based DB Management UI) → `http://localhost:8080`
 
-```
+---
 
-### 2. Configurar variables de entorno
+### **How to Run (Development Mode)**
 
-Copia `.env.example` → `.env`
-
-Ajusta:
-
-```
-PGUSER
-PGPASSWORD
-PGSUPERUSER
-PGSUPERPASSWORD
-
-```
-
-### 3. Instalar dependencias
-
-```bash
-pip install -r requirements.txt
-
-```
-
-### 4. Levantar Docker
-
-```bash
-docker-compose up -d
-
-```
-
-### 5. Crear base de datos + migraciones + seeds
-
-```bash
-python -m db.setup_db
-
-```
-
-(Ejecuta: creación de rol, DB, tablas, vistas, triggers y datos demo)
-
-### 6. Ejecutar la app
-
-```bash
-python main.py
-
-```
-
+1. **Create a Virtual Environment**
+    
+    `python -m venv venv`
+    # Windows:
+    `.\venv\Scripts\activate`
+    # Linux/Mac:
+    `source venv/bin/activate`
+    
+    > 
+2. **Configure Environment Variables** Copy `.env.example` to `.env` and adjust the following:
+    - `PGUSER` / `PGPASSWORD`
+    - `PGSUPERUSER` / `PGSUPERPASSWORD`
+3. **Install Dependencies**
+    
+    `pip install -r requirements.txt`
+    
+4. **Launch Docker Containers**
+    
+    `docker-compose up -d`
+    
+    > 
+5. **Initialize Database (Migrations + Seeds)**
+    
+    `python -m db.setup_db`
+    
+    *This creates the roles, database, tables, views, triggers, and demo data.*
+    
+6. **Run the Application**
+    
+    `python main.py`
+   
 ---
 
 ## Screenshots - Stock Flow
@@ -152,13 +123,12 @@ python main.py
 ---
 
 
-## **Descargas**
+### **Downloads**
 
-Descarga la última versión:
- **https://github.com/Andres-Santanaszk/Stock-Flow/releases/latest**
+Download the latest version: [Stock Flow Releases](https://github.com/Andres-Santanaszk/Stock-Flow/releases/latest)
 
-Archivos disponibles:
+**Available files:**
 
-- `StockFlow.exe` (ejecutable)
+- `StockFlow.exe` (Standalone executable)
 - `StockFlow.zip`
-- Código fuente
+- Source Code
